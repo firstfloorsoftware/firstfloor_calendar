@@ -1,0 +1,27 @@
+BEGIN:VEVENT
+DTSTART:20101112T140000Z
+DTEND:20101112T143000Z
+DTSTAMP:20250723T192831Z
+ORGANIZER;CN=john@example.com:mailto:john@example.com
+UID:123456
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;CN=jo
+ hn@example.com;X-NUM-GUESTS=0:mailto:john@example.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=Alexan
+ der;X-NUM-GUESTS=0:mailto:alexander@example.com
+CREATED:20101111T142829Z
+DESCRIPTION:When: Friday\, November 12\, 2010 9:00 AM-9:30 AM (UTC-05:00) E
+ astern Time (US & Canada).\nWhere: Repective offices\n\nNote: The GMT offse
+ t above does not reflect daylight saving time adjustments.\n\n*~*~*~*~*~*~*
+ ~*~*~*\n\nTentatively rescheduling our call for Friday at 9am EST:\n\n1.  P
+ lease join my meeting\, Friday\, November 12 at 9:00 AM Eastern Standard Ti
+ me.\nhttps://www1.gotomeeting.com/join/000111222\n\n2.  Join the conference
+  call:\n\nMeeting ID: 000-111-222\n\nGoToMeeting®\nOnline Meetings Made Eas
+ y™
+LAST-MODIFIED:20221221T163048Z
+LOCATION:Repective offices
+SEQUENCE:1
+STATUS:TENTATIVE
+SUMMARY:Example marketing partnership call
+TRANSP:OPAQUE
+CATEGORIES:http://schemas.google.com/g/2005#event
+END:VEVENT
