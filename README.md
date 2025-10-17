@@ -35,6 +35,7 @@ VERSION:2.0
 PRODID:-//Example//EN
 BEGIN:VEVENT
 UID:event-123@example.com
+DTSTAMP:20240315T090000Z
 DTSTART:20240315T100000Z
 DTEND:20240315T110000Z
 SUMMARY:Team Meeting
@@ -94,7 +95,7 @@ import 'dart:io';
 final file = File('large-calendar.ics');
 final streamParser = DocumentStreamParser();
 
-await for (final component in streamParser.streamComponents(file.openRead())) {
+await for (final component in streamParser.parseComponents(file.openRead())) {
   if (component.name == 'VEVENT') {
     final summary = component.properties
         .where((p) => p.name == 'SUMMARY')
