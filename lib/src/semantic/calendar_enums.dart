@@ -189,7 +189,7 @@ enum FreeBusyType { free, busy, busyUnavailable, busyTentative }
 
 /// Names for [FreeBusyType] enum values
 class FreeBusyTypeNames {
-  /// The name for the private constructor to prevent instantiation.
+  /// Private constructor to prevent instantiation.
   FreeBusyTypeNames._();
 
   /// The name for the free type.
