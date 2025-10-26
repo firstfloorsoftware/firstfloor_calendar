@@ -3,6 +3,9 @@ enum AlarmAction { audio, display, email, procedure }
 
 /// Names for [AlarmAction] enum values
 class AlarmActionNames {
+  /// Private constructor to prevent instantiation.
+  AlarmActionNames._();
+
   /// The name for the audio action.
   static const audio = 'AUDIO';
 
@@ -32,7 +35,7 @@ class AlarmActionNames {
   }
 }
 
-// Map between enum and names
+/// Extensions for [AlarmAction] enum.
 extension AlarmActionExtensions on AlarmAction {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -43,11 +46,14 @@ extension AlarmActionExtensions on AlarmAction {
   };
 }
 
-///  Calendar user types.
+/// Calendar user types.
 enum CalendarUserType { individual, group, resource, room, unknown }
 
 /// Names for [CalendarUserType] enum values
 class CalendarUserTypeNames {
+  /// The private constructor to prevent instantiation.
+  CalendarUserTypeNames._();
+
   /// The name for the individual user type.
   static const individual = 'INDIVIDUAL';
 
@@ -82,6 +88,7 @@ class CalendarUserTypeNames {
   }
 }
 
+/// Extensions for [CalendarUserType] enum.
 extension CalendarUserTypeExtensions on CalendarUserType {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -98,6 +105,9 @@ enum Classification { public, private, confidential }
 
 /// Names for [Classification] enum values
 class ClassificationNames {
+  /// The private constructor to prevent instantiation.
+  ClassificationNames._();
+
   /// The name for the public classification.
   static const public = 'PUBLIC';
 
@@ -122,6 +132,7 @@ class ClassificationNames {
   }
 }
 
+/// Extensions for [Classification] enum.
 extension ClassificationExtensions on Classification {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -136,6 +147,9 @@ enum EventStatus { tentative, confirmed, cancelled }
 
 /// Names for [EventStatus] enum values
 class EventStatusNames {
+  /// The private constructor to prevent instantiation.
+  EventStatusNames._();
+
   /// The name for the tentative status.
   static const tentative = 'TENTATIVE';
 
@@ -160,6 +174,7 @@ class EventStatusNames {
   }
 }
 
+/// Extensions for [EventStatus] enum.
 extension EventStatusExtensions on EventStatus {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -174,6 +189,9 @@ enum FreeBusyType { free, busy, busyUnavailable, busyTentative }
 
 /// Names for [FreeBusyType] enum values
 class FreeBusyTypeNames {
+  /// The name for the private constructor to prevent instantiation.
+  FreeBusyTypeNames._();
+
   /// The name for the free type.
   static const free = 'FREE';
 
@@ -203,6 +221,7 @@ class FreeBusyTypeNames {
   }
 }
 
+/// Extensions for [FreeBusyType] enum.
 extension FreeBusyTypeExtensions on FreeBusyType {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -218,6 +237,9 @@ enum JournalStatus { draft, final_, amended }
 
 /// Names for [JournalStatus] enum values
 class JournalStatusNames {
+  /// The private constructor to prevent instantiation.
+  JournalStatusNames._();
+
   /// The name for the draft status.
   static const draft = 'DRAFT';
 
@@ -242,6 +264,7 @@ class JournalStatusNames {
   }
 }
 
+/// Extensions for [JournalStatus] enum.
 extension JournalStatusExtensions on JournalStatus {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -263,8 +286,10 @@ enum ParticipationStatus {
 }
 
 /// Names for [ParticipationStatus] enum values
-
 class ParticipationStatusNames {
+  /// The private constructor to prevent instantiation.
+  ParticipationStatusNames._();
+
   /// The name for the needs-action status.
   static const needsAction = 'NEEDS-ACTION';
 
@@ -309,6 +334,7 @@ class ParticipationStatusNames {
   }
 }
 
+/// Extensions for [ParticipationStatus] enum.
 extension ParticipationStatusExtensions on ParticipationStatus {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -327,6 +353,9 @@ enum ParticipationRole { chair, reqParticipant, optParticipant, nonParticipant }
 
 /// Names for [ParticipationRole] enum values
 class ParticipationRoleNames {
+  /// The private constructor to prevent instantiation.
+  ParticipationRoleNames._();
+
   /// The name for the chair role.
   static const chair = 'CHAIR';
 
@@ -356,6 +385,7 @@ class ParticipationRoleNames {
   }
 }
 
+/// Extensions for [ParticipationRole] enum.
 extension ParticipationRoleExtensions on ParticipationRole {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -378,8 +408,10 @@ enum RecurrenceFrequency {
 }
 
 /// Names for [RecurrenceFrequency] enum values
-
 class RecurrenceFrequencyNames {
+  /// The private constructor to prevent instantiation.
+  RecurrenceFrequencyNames._();
+
   /// The name for the secondly frequency.
   static const secondly = 'SECONDLY';
 
@@ -424,6 +456,7 @@ class RecurrenceFrequencyNames {
   }
 }
 
+/// Extensions for [RecurrenceFrequency] enum.
 extension RecurrenceFrequencyExtensions on RecurrenceFrequency {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -440,7 +473,11 @@ extension RecurrenceFrequencyExtensions on RecurrenceFrequency {
 /// Relationship types.
 enum RelationshipType { child, parent, sibling }
 
+/// Names for [RelationshipType] enum values
 class RelationshipTypeNames {
+  /// The private constructor to prevent instantiation.
+  RelationshipTypeNames._();
+
   /// The name for the child relationship type.
   static const child = 'CHILD';
 
@@ -465,6 +502,7 @@ class RelationshipTypeNames {
   }
 }
 
+/// Extensions for [RelationshipType] enum.
 extension RelationshipTypeExtensions on RelationshipType {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -477,7 +515,11 @@ extension RelationshipTypeExtensions on RelationshipType {
 /// Time transparency types.
 enum TimeTransparency { opaque, transparent }
 
+/// Names for [TimeTransparency] enum values
 class TimeTransparencyNames {
+  /// The private constructor to prevent instantiation.
+  TimeTransparencyNames._();
+
   /// The name for the opaque transparency.
   static const opaque = 'OPAQUE';
 
@@ -497,6 +539,7 @@ class TimeTransparencyNames {
   }
 }
 
+/// Extensions for [TimeTransparency] enum.
 extension TimeTransparencyExtensions on TimeTransparency {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -510,6 +553,9 @@ enum TodoStatus { needsAction, completed, inProcess, cancelled }
 
 /// Names for [TodoStatus] enum values
 class TodoStatusNames {
+  /// The private constructor to prevent instantiation.
+  TodoStatusNames._();
+
   /// The name for the needs-action status.
   static const needsAction = 'NEEDS-ACTION';
 
@@ -539,6 +585,7 @@ class TodoStatusNames {
   }
 }
 
+/// Extensions for [TodoStatus] enum.
 extension TodoStatusExtensions on TodoStatus {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -569,6 +616,9 @@ enum ValueType {
 
 /// Names for [ValueType] enum values
 class ValueTypeNames {
+  /// The private constructor to prevent instantiation.
+  ValueTypeNames._();
+
   /// The name for the binary value type.
   static const binary = 'BINARY';
 
@@ -648,6 +698,7 @@ class ValueTypeNames {
   }
 }
 
+/// Extensions for [ValueType] enum.
 extension ValueTypeExtensions on ValueType {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {
@@ -673,6 +724,9 @@ enum Weekday { su, mo, tu, we, th, fr, sa }
 
 /// Names for [Weekday] enum values
 class WeekdayNames {
+  /// The private constructor to prevent instantiation.
+  WeekdayNames._();
+
   /// The name for Sunday.
   static const su = 'SU';
 
@@ -717,6 +771,7 @@ class WeekdayNames {
   }
 }
 
+/// Extensions for [Weekday] enum.
 extension WeekdayExtensions on Weekday {
   /// Converts the enum value to its corresponding string name.
   String toName() => switch (this) {

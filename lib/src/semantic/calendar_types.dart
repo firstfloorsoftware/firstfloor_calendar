@@ -5,7 +5,7 @@ import 'package:timezone/standalone.dart' as tz;
 
 import 'semantic.dart';
 
-// Represents an ATTACH property, which can be either a URI or binary data.
+/// Represents an ATTACH property, which can be either a URI or binary data.
 abstract class Attachment {
   /// The MIME type of the attachment, defaults to 'application/octet-stream'.
   final String fmtType;
