@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.1] - 2025-10-26
+## [1.0.1] Oct 26, 2025
 
 ### Fixed
 - Updated README examples to use correct API methods (`parseComponents` instead of deprecated `streamComponents`)
@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Improved
 - Enhanced documentation comments across public APIs for better clarity and consistency
 
-## [1.0.0] - 2025-01-15
+## [1.0.0] Oct 15, 2025
 
 ### Added
 - RFC 5545 compliant iCalendar parser
