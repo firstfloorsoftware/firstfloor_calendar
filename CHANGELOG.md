@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-10-26
+
+### Fixed
+- Updated README examples to use correct API methods (`parseComponents` instead of deprecated `streamComponents`)
+- Added missing required `DTSTAMP` properties in README examples for RFC 5545 compliance
+
+### Improved
+- Enhanced documentation comments across public APIs for better clarity and consistency
+
 ## [1.0.0] - 2025-01-15
 
 ### Added
@@ -13,4 +22,5 @@ All notable changes to this project will be documented in this file.
 - Timezone-aware date/time handling
 - Two-layer architecture (document + semantic)
 
+[1.0.1]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.1
 [1.0.0]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.0
