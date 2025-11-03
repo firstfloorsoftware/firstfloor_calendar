@@ -748,4 +748,49 @@ void main() {
       }
     });
   });
+
+  group('RecurrenceIterator - Real World Examples', () {
+    test(
+      'Dutch air raid siren (luchtalarm) - first Monday of every month at 12:00',
+      () {
+        // The Dutch air raid siren test occurs on the first Monday of every month at 12:00
+        final dtstart = CalDateTime.local(2025, 1, 1, 12, 0, 0);
+        final rrule = RecurrenceRule(
+          freq: RecurrenceFrequency.monthly,
+          byDay: {const ByDay(Weekday.mo, ordinal: 1)},
+          count: 12, // One year of tests
+        );
+
+        final iterator = RecurrenceIterator(dtstart: dtstart, rrule: rrule);
+
+        final actual = occurrences(iterator);
+        expect(actual, [
+          '20250106T120000', // January 6, 2025 (Monday)
+          '20250203T120000', // February 3, 2025 (Monday)
+          '20250303T120000', // March 3, 2025 (Monday)
+          '20250407T120000', // April 7, 2025 (Monday)
+          '20250505T120000', // May 5, 2025 (Monday)
+          '20250602T120000', // June 2, 2025 (Monday)
+          '20250707T120000', // July 7, 2025 (Monday)
+          '20250804T120000', // August 4, 2025 (Monday)
+          '20250901T120000', // September 1, 2025 (Monday)
+          '20251006T120000', // October 6, 2025 (Monday)
+          '20251103T120000', // November 3, 2025 (Monday)
+          '20251201T120000', // December 1, 2025 (Monday)
+        ]);
+
+        // Verify that all occurrences are indeed the first Monday
+        for (final occ in iterator.occurrences()) {
+          expect(occ.weekday, Weekday.mo, reason: 'Should be Monday');
+          expect(
+            occ.day,
+            lessThanOrEqualTo(7),
+            reason: 'Should be in first week',
+          );
+          expect(occ.time!.hour, 12, reason: 'Should be at 12:00');
+          expect(occ.time!.minute, 0, reason: 'Should be at 12:00');
+        }
+      },
+    );
+  });
 }
