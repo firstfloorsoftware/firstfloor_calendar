@@ -24,7 +24,7 @@ class CalendarParser {
       'METHOD': PropertyRule(parser: parseString),
     },
     'VEVENT': {
-    'DTSTAMP': PropertyRule(minOccurs: 1, parser: parseCalDateTimeUtc),
+      'DTSTAMP': PropertyRule(minOccurs: 1, parser: parseCalDateTimeUtc),
       'UID': PropertyRule(minOccurs: 1, parser: parseString),
       'DTSTART': PropertyRule(minOccurs: 1, parser: parseCalDateOrDateTime),
       'CLASS': PropertyRule(parser: parseString),
