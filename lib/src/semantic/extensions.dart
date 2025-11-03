@@ -1,7 +1,7 @@
 import '../document/document.dart';
 import 'semantic.dart';
 
-/// Extensions for semantic classes to enhance functionality.
+/// Extensions for [CalDateTime] to enhance functionality.
 extension CalDateTimeExtensions on CalDateTime {
   /// Determines if this date is after the [other] date.
   bool isAfter(CalDateTime other) {
@@ -31,7 +31,7 @@ extension CalDateTimeExtensions on CalDateTime {
   }
 }
 
-/// Extensions for recurrence rule classes to enhance functionality.
+/// Extensions for [RecurrenceRule] to enhance functionality.
 extension RecurrenceRuleExtensions on RecurrenceRule {
   /// Determines if the recurrence rule is infinite (no end).
   bool get isInfinite => count == null && until == null;
@@ -46,7 +46,7 @@ extension RecurrenceRuleExtensions on RecurrenceRule {
   bool get hasUntil => until != null;
 }
 
-/// Extensions for calendar component classes to enhance functionality.
+/// Extensions for [EventComponent] to enhance functionality.
 extension EventComponentExtensions on EventComponent {
   /// Determines if the event is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
@@ -69,7 +69,7 @@ extension EventComponentExtensions on EventComponent {
   }
 }
 
-/// Extensions for calendar component classes to enhance functionality.
+/// Extensions for [TodoComponent] to enhance functionality.
 extension TodoComponentExtensions on TodoComponent {
   /// Determines if the todo is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
@@ -88,7 +88,7 @@ extension TodoComponentExtensions on TodoComponent {
   }
 }
 
-/// Extensions for calendar component classes to enhance functionality.
+/// Extensions for [JournalComponent] to enhance functionality.
 extension JournalComponentExtensions on JournalComponent {
   /// Determines if the journal is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
@@ -107,7 +107,7 @@ extension JournalComponentExtensions on JournalComponent {
   }
 }
 
-/// Extensions for calendar component classes to enhance functionality.
+/// Extensions for [TimeZoneSubComponent] to enhance functionality.
 extension TimeZoneSubComponentExtensions on TimeZoneSubComponent {
   /// Determines if the timezone component is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
@@ -125,7 +125,7 @@ extension TimeZoneSubComponentExtensions on TimeZoneSubComponent {
   }
 }
 
-/// Extensions for calendar document component classes to enhance functionality.
+/// Extensions for [CalendarDocumentComponent] to enhance functionality.
 extension CalendarDocumentComponentExtensions on CalendarDocumentComponent {
   /// Determines if this component is an event (VEVENT).
   bool get isEvent => name == 'VEVENT';
