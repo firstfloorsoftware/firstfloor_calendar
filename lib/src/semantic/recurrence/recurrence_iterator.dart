@@ -258,7 +258,15 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
   ///
   /// [start] and [end] define the inclusive date range.
   ///
-  /// Example:
+  /// When [duration] is provided, the method checks for overlap:
+  /// an occurrence is included if it starts at or before [end] AND
+  /// ends (occurrence + duration) at or after [start]. This correctly
+  /// handles multi-day events that may start before the range but
+  /// extend into it.
+  ///
+  /// When [duration] is null, only the occurrence start time is checked.
+  ///
+  /// Example without duration:
   /// ```dart
   /// final iterator = RecurrenceIterator(
   ///   dtstart: CalDateTime(2025, 1, 1, 10, 0, 0),
@@ -272,22 +280,55 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
   ///   print(occurrence); // Only occurrences from Jan 10-20
   /// }
   /// ```
+  ///
+  /// Example with duration (multi-day event):
+  /// ```dart
+  /// final iterator = RecurrenceIterator(
+  ///   dtstart: CalDateTime(2025, 1, 1, 10, 0, 0),
+  ///   rrule: RecurrenceRule(freq: Frequency.weekly),
+  /// );
+  ///
+  /// final duration = CalDuration(days: 3); // 3-day event
+  /// final start = CalDateTime(2025, 1, 10, 0, 0, 0);
+  /// final end = CalDateTime(2025, 1, 20, 23, 59, 59);
+  ///
+  /// for (final occurrence in iterator.occurrencesInRange(start, end, duration: duration)) {
+  ///   print(occurrence); // Includes events that overlap the range
+  /// }
+  /// ```
   Iterable<CalDateTime> occurrencesInRange(
     CalDateTime start,
-    CalDateTime end,
-  ) sync* {
+    CalDateTime end, {
+    CalDuration? duration,
+  }) sync* {
     if (start.isAfter(end)) {
       throw ArgumentError('start must be before or equal to end');
     }
 
     for (final o in occurrences()) {
-      // Skip occurrences before the range
-      if (o.isBefore(start)) continue;
+      if (duration != null) {
+        // Duration overlap logic:
+        // Include if occurrence starts at or before range end
+        // AND occurrence ends at or after range start
+        final occurrenceEnd = o.addDuration(duration);
 
-      // Stop when past the range (crucial for infinite recurrences)
-      if (o.isAfter(end)) break;
+        // Skip if occurrence ends before range starts
+        if (occurrenceEnd.isBefore(start)) continue;
 
-      yield o;
+        // Stop when occurrence starts after range ends (crucial for infinite recurrences)
+        if (o.isAfter(end)) break;
+
+        yield o;
+      } else {
+        // Single-point occurrence logic
+        // Skip occurrences before the range
+        if (o.isBefore(start)) continue;
+
+        // Stop when past the range (crucial for infinite recurrences)
+        if (o.isAfter(end)) break;
+
+        yield o;
+      }
     }
   }
 }

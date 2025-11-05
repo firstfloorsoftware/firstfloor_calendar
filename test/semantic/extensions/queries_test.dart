@@ -1518,6 +1518,154 @@ END:VJOURNAL'''),
         expect(results[0].journal.summary, 'Work Journal');
         expect(results[1].journal.summary, 'Work Notes');
       });
+
+      group('Multi-day event overlap', () {
+        test('Includes event that starts before range but ends during', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-1
+DTSTAMP:20250101T000000Z
+DTSTART:20241228T100000
+DTEND:20250105T110000
+SUMMARY:Spans Into Range
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          expect(results.length, 1);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2024, 12, 28, 10, 0, 0),
+          );
+        });
+
+        test('Includes event that starts during range but ends after', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-2
+DTSTAMP:20250101T000000Z
+DTSTART:20250125T100000
+DTEND:20250205T110000
+SUMMARY:Spans Out Of Range
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          expect(results.length, 1);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 25, 10, 0, 0),
+          );
+        });
+
+        test('Includes event that fully contains range', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-3
+DTSTAMP:20250101T000000Z
+DTSTART:20241215T100000
+DTEND:20250215T110000
+SUMMARY:Fully Contains Range
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          expect(results.length, 1);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2024, 12, 15, 10, 0, 0),
+          );
+        });
+
+        test('Excludes event that ends before range starts', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-4
+DTSTAMP:20250101T000000Z
+DTSTART:20241215T100000
+DTEND:20241225T110000
+SUMMARY:Ends Before Range
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          expect(results.length, 0);
+        });
+
+        test('Includes recurring multi-day events with overlap', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-recurring
+DTSTAMP:20250101T000000Z
+DTSTART:20241228T100000
+DTEND:20250102T110000
+RRULE:FREQ=WEEKLY;COUNT=4
+SUMMARY:Recurring Multi-Day
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          // First occurrence: Dec 28 - Jan 2 (overlaps with range start)
+          // Second occurrence: Jan 4 - Jan 9 (fully in range)
+          // Third occurrence: Jan 11 - Jan 16 (fully in range)
+          // Fourth occurrence: Jan 18 - Jan 23 (fully in range)
+          expect(results.length, 4);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2024, 12, 28, 10, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 4, 10, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 11, 10, 0, 0),
+          );
+          expect(
+            results[3].occurrence,
+            CalDateTime.local(2025, 1, 18, 10, 0, 0),
+          );
+        });
+
+        test('Handles DURATION instead of DTEND', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-multiday-duration
+DTSTAMP:20250101T000000Z
+DTSTART:20241228T100000
+DURATION:P5D
+SUMMARY:With Duration
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          // Event: Dec 28 10:00 + 5 days = Jan 2 10:00 (overlaps with range)
+          expect(results.length, 1);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2024, 12, 28, 10, 0, 0),
+          );
+        });
+      });
     });
   });
 }

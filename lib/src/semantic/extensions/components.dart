@@ -19,6 +19,28 @@ extension EventComponentExtensions on EventComponent {
     return null;
   }
 
+  /// Returns the effective duration of the event.
+  ///
+  /// If [duration] is specified, returns it directly.
+  /// Otherwise, calculates duration from [effectiveEnd] - [dtstart].
+  /// Returns null if the event has no duration or end time.
+  CalDuration? get effectiveDuration {
+    if (duration != null) return duration;
+
+    final end = effectiveEnd;
+    if (end != null && dtstart != null && end != dtstart) {
+      final diff = end.native.difference(dtstart!.native);
+      return CalDuration(
+        days: diff.inDays,
+        hours: diff.inHours % 24,
+        minutes: diff.inMinutes % 60,
+        seconds: diff.inSeconds % 60,
+      );
+    }
+
+    return null;
+  }
+
   /// Generates all occurrences of the event based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
   ///
@@ -41,6 +63,27 @@ extension TodoComponentExtensions on TodoComponent {
   /// Determines if the todo is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
   bool get isRecurring => rrule != null || rdates.isNotEmpty;
+
+  /// Returns the effective duration of the todo.
+  ///
+  /// If [duration] is specified, returns it directly.
+  /// Otherwise, calculates duration from [due] - [dtstart].
+  /// Returns null if the todo has no duration or due date.
+  CalDuration? get effectiveDuration {
+    if (duration != null) return duration;
+
+    if (due != null && dtstart != null && due != dtstart) {
+      final diff = due!.native.difference(dtstart!.native);
+      return CalDuration(
+        days: diff.inDays,
+        hours: diff.inHours % 24,
+        minutes: diff.inMinutes % 60,
+        seconds: diff.inSeconds % 60,
+      );
+    }
+
+    return null;
+  }
 
   /// Generates all occurrences of the todo based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).

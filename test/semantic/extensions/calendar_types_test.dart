@@ -48,7 +48,7 @@ void main() {
     });
 
     group('addDuration', () {
-      test('adds positive duration with days', () {
+      test('Adds positive duration with days', () {
         final date = CalDateTime.local(2025, 1, 1, 10, 0, 0);
         final duration = CalDuration(days: 5);
         final result = date.addDuration(duration);

@@ -44,7 +44,11 @@ extension EventIterableQuery on Iterable<EventComponent> {
         rdates: event.rdates,
       );
 
-      for (final occurrence in iterator.occurrencesInRange(start, end)) {
+      for (final occurrence in iterator.occurrencesInRange(
+        start,
+        end,
+        duration: event.effectiveDuration,
+      )) {
         yield (occurrence: occurrence, event: event);
       }
     }
@@ -95,7 +99,11 @@ extension TodoIterableQuery on Iterable<TodoComponent> {
         rdates: todo.rdates,
       );
 
-      for (final occurrence in iterator.occurrencesInRange(start, end)) {
+      for (final occurrence in iterator.occurrencesInRange(
+        start,
+        end,
+        duration: todo.effectiveDuration,
+      )) {
         yield (occurrence: occurrence, todo: todo);
       }
     }
