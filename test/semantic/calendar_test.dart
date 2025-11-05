@@ -9,7 +9,7 @@ void main() {
   });
 
   group('Calendar', () {
-    test('accesses basic calendar properties', () {
+    test('Accesses basic calendar properties', () {
       final cal = parser.parseFromString('''
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -31,7 +31,7 @@ END:VCALENDAR
       expect(cal.events.length, 1);
     });
 
-    test('calscale defaults to GREGORIAN when not specified', () {
+    test('CALSCALE defaults to GREGORIAN when not specified', () {
       final cal = parser.parseFromString('''
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -47,7 +47,7 @@ END:VCALENDAR
       expect(cal.calscale, 'GREGORIAN');
     });
 
-    test('method is null when not specified', () {
+    test('METHOD is null when not specified', () {
       final cal = parser.parseFromString('''
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -58,7 +58,7 @@ END:VCALENDAR
       expect(cal.method, isNull);
     });
 
-    test('accesses component collections', () {
+    test('Accesses component collections', () {
       final cal = parser.parseFromString('''
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -103,7 +103,7 @@ END:VCALENDAR
   });
 
   group('EventComponent', () {
-    test('accesses optional event properties', () {
+    test('Accesses optional event properties', () {
       final event = parser.parseComponentFromString<EventComponent>('''
 BEGIN:VEVENT
 UID:event1
@@ -191,7 +191,7 @@ END:VEVENT
       ]);
     });
 
-    test('handles null optional properties', () {
+    test('Handles null optional properties', () {
       final event = parser.parseComponentFromString<EventComponent>('''
 BEGIN:VEVENT
 UID:event1
@@ -223,7 +223,7 @@ END:VEVENT
       expect(event.duration, isNull);
     });
 
-    test('accesses alarms', () {
+    test('Accesses alarms', () {
       final event = parser.parseComponentFromString<EventComponent>('''
 BEGIN:VEVENT
 UID:event1
@@ -244,7 +244,7 @@ END:VEVENT
       expect(event.alarms.length, 2);
     });
 
-    test('handles multiple RESOURCES properties', () {
+    test('Handles multiple RESOURCES properties', () {
       final event = parser.parseComponentFromString<EventComponent>('''
 BEGIN:VEVENT
 UID:event1
@@ -267,7 +267,7 @@ END:VEVENT
   });
 
   group('TodoComponent', () {
-    test('accesses required todo properties', () {
+    test('Accesses required todo properties', () {
       final todo = parser.parseComponentFromString<TodoComponent>('''
 BEGIN:VTODO
 UID:todo1
@@ -281,7 +281,7 @@ END:VTODO
       expect(todo.dtstart, isNotNull);
     });
 
-    test('accesses optional todo properties', () {
+    test('Accesses optional todo properties', () {
       final todo = parser.parseComponentFromString<TodoComponent>('''
 BEGIN:VTODO
 UID:todo1
@@ -367,7 +367,7 @@ END:VTODO
       ]);
     });
 
-    test('handles null optional todo properties', () {
+    test('Handles null optional todo properties', () {
       final todo = parser.parseComponentFromString<TodoComponent>('''
 BEGIN:VTODO
 UID:todo1
@@ -398,7 +398,7 @@ END:VTODO
       expect(todo.duration, isNull);
     });
 
-    test('accesses alarms', () {
+    test('Accesses alarms', () {
       final todo = parser.parseComponentFromString<TodoComponent>('''
 BEGIN:VTODO
 UID:todo1
@@ -417,7 +417,7 @@ END:VTODO
   });
 
   group('JournalComponent', () {
-    test('accesses required journal properties', () {
+    test('Accesses required journal properties', () {
       final journal = parser.parseComponentFromString<JournalComponent>('''
 BEGIN:VJOURNAL
 UID:journal1
@@ -431,7 +431,7 @@ END:VJOURNAL
       expect(journal.dtstart, CalDateTime.utc(2025, 1, 15, 9, 0, 0));
     });
 
-    test('accesses optional journal properties', () {
+    test('Accesses optional journal properties', () {
       final journal = parser.parseComponentFromString<JournalComponent>('''
 BEGIN:VJOURNAL
 UID:journal1
@@ -498,7 +498,7 @@ END:VJOURNAL
       expect(journal.requestStatus, ['2.0;Success']);
     });
 
-    test('handles null optional journal properties', () {
+    test('Handles null optional journal properties', () {
       final journal = parser.parseComponentFromString<JournalComponent>('''
 BEGIN:VJOURNAL
 UID:journal1
@@ -523,7 +523,7 @@ END:VJOURNAL
   });
 
   group('FreeBusyComponent', () {
-    test('accesses required freebusy properties', () {
+    test('Accesses required freebusy properties', () {
       final fb = parser.parseComponentFromString<FreeBusyComponent>('''
 BEGIN:VFREEBUSY
 UID:fb1
@@ -540,7 +540,7 @@ END:VFREEBUSY
       );
     });
 
-    test('accesses optional freebusy properties', () {
+    test('Accesses optional freebusy properties', () {
       final fb = parser.parseComponentFromString<FreeBusyComponent>('''
 BEGIN:VFREEBUSY
 UID:fb1
@@ -577,7 +577,7 @@ END:VFREEBUSY
       expect(fb.requestStatus, ['2.0;Success']);
     });
 
-    test('handles null optional freebusy properties', () {
+    test('Handles null optional freebusy properties', () {
       final fb = parser.parseComponentFromString<FreeBusyComponent>('''
 BEGIN:VFREEBUSY
 UID:fb1
@@ -594,7 +594,7 @@ END:VFREEBUSY
   });
 
   group('TimeZoneComponent', () {
-    test('accesses timezone properties', () {
+    test('Accesses timezone properties', () {
       final tz = parser.parseComponentFromString<TimeZoneComponent>('''
 BEGIN:VTIMEZONE
 TZID:America/New_York
@@ -676,7 +676,7 @@ END:VTIMEZONE
       expect(dst.tznames, ['EDT']);
     });
 
-    test('handles null optional timezone properties', () {
+    test('Handles null optional timezone properties', () {
       final tz = parser.parseComponentFromString<TimeZoneComponent>('''
 BEGIN:VTIMEZONE
 TZID:Custom/Zone
@@ -694,7 +694,7 @@ END:VTIMEZONE
   });
 
   group('AlarmComponent', () {
-    test('accesses alarm properties', () {
+    test('Accesses alarm properties', () {
       final alarm = parser.parseComponentFromString<AlarmComponent>('''
 BEGIN:VALARM
 ACTION:EMAIL
@@ -726,7 +726,7 @@ END:VALARM
       ]);
     });
 
-    test('handles null optional alarm properties', () {
+    test('Handles null optional alarm properties', () {
       final alarm = parser.parseComponentFromString<AlarmComponent>('''
 BEGIN:VALARM
 ACTION:DISPLAY
@@ -742,7 +742,7 @@ END:VALARM
   });
 
   group('CalendarComponent.typed factory', () {
-    test('creates Calendar from VCALENDAR', () {
+    test('Creates Calendar from VCALENDAR', () {
       final component = CalendarComponent.typed(
         componentName: 'VCALENDAR',
         properties: {
@@ -775,7 +775,7 @@ END:VALARM
       expect(component, isA<Calendar>());
     });
 
-    test('creates generic component for unknown type', () {
+    test('Creates generic component for unknown type', () {
       final component = CalendarComponent.typed(
         componentName: 'VUNKNOWN',
         properties: {},

@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   group('RecurrenceRuleBuilder', () {
     group('Basic building', () {
-      test('builds with only required frequency', () {
+      test('Builds with only required frequency', () {
         final builder = RecurrenceRuleBuilder();
         builder.setFreq(RecurrenceFrequency.daily);
         final rule = builder.build();
@@ -16,12 +16,12 @@ void main() {
         expect(rule.count, isNull);
       });
 
-      test('throws StateError when building without frequency', () {
+      test('Throws StateError when building without frequency', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.build(), throwsStateError);
       });
 
-      test('clears all values', () {
+      test('Clears all values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setFreq(RecurrenceFrequency.weekly);
         builder.setCount(10);
@@ -33,7 +33,7 @@ void main() {
         expect(() => builder.build(), throwsStateError);
       });
 
-      test('builds with all basic properties', () {
+      test('Builds with all basic properties', () {
         final builder = RecurrenceRuleBuilder();
         builder.setFreq(RecurrenceFrequency.monthly);
         builder.setInterval(2);
@@ -48,7 +48,7 @@ void main() {
         expect(rule.wkst, Weekday.su);
       });
 
-      test('builds with until date', () {
+      test('Builds with until date', () {
         final builder = RecurrenceRuleBuilder();
         final until = CalDateTime.date(2025, 12, 31);
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -61,7 +61,7 @@ void main() {
     });
 
     group('setCount validation', () {
-      test('accepts positive count', () {
+      test('Accepts positive count', () {
         final builder = RecurrenceRuleBuilder();
         builder.setCount(10);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -70,19 +70,19 @@ void main() {
         expect(rule.count, 10);
       });
 
-      test('throws ArgumentError for zero count', () {
+      test('Throws ArgumentError for zero count', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setCount(0), throwsArgumentError);
       });
 
-      test('throws ArgumentError for negative count', () {
+      test('Throws ArgumentError for negative count', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setCount(-1), throwsArgumentError);
       });
     });
 
     group('setInterval validation', () {
-      test('accepts positive interval', () {
+      test('Accepts positive interval', () {
         final builder = RecurrenceRuleBuilder();
         builder.setInterval(5);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -91,19 +91,19 @@ void main() {
         expect(rule.interval, 5);
       });
 
-      test('throws ArgumentError for zero interval', () {
+      test('Throws ArgumentError for zero interval', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setInterval(0), throwsArgumentError);
       });
 
-      test('throws ArgumentError for negative interval', () {
+      test('Throws ArgumentError for negative interval', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setInterval(-2), throwsArgumentError);
       });
     });
 
     group('setBySecond validation', () {
-      test('accepts valid bySecond values', () {
+      test('Accepts valid bySecond values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setBySecond({0, 15, 30, 45, 60});
         builder.setFreq(RecurrenceFrequency.minutely);
@@ -112,7 +112,7 @@ void main() {
         expect(rule.bySecond, {0, 15, 30, 45, 60});
       });
 
-      test('accepts null bySecond', () {
+      test('Accepts null bySecond', () {
         final builder = RecurrenceRuleBuilder();
         builder.setBySecond(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -121,19 +121,19 @@ void main() {
         expect(rule.bySecond, isNull);
       });
 
-      test('throws ArgumentError for bySecond below 0', () {
+      test('Throws ArgumentError for bySecond below 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setBySecond({-1, 30}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for bySecond above 60', () {
+      test('Throws ArgumentError for bySecond above 60', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setBySecond({30, 61}), throwsArgumentError);
       });
     });
 
     group('setByMinute validation', () {
-      test('accepts valid byMinute values', () {
+      test('Accepts valid byMinute values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMinute({0, 15, 30, 45});
         builder.setFreq(RecurrenceFrequency.hourly);
@@ -142,7 +142,7 @@ void main() {
         expect(rule.byMinute, {0, 15, 30, 45});
       });
 
-      test('accepts null byMinute', () {
+      test('Accepts null byMinute', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMinute(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -151,19 +151,19 @@ void main() {
         expect(rule.byMinute, isNull);
       });
 
-      test('throws ArgumentError for byMinute below 0', () {
+      test('Throws ArgumentError for byMinute below 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMinute({-1, 30}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byMinute above 59', () {
+      test('Throws ArgumentError for byMinute above 59', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMinute({30, 60}), throwsArgumentError);
       });
     });
 
     group('setByHour validation', () {
-      test('accepts valid byHour values', () {
+      test('Accepts valid byHour values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByHour({0, 6, 12, 18, 23});
         builder.setFreq(RecurrenceFrequency.daily);
@@ -172,7 +172,7 @@ void main() {
         expect(rule.byHour, {0, 6, 12, 18, 23});
       });
 
-      test('accepts null byHour', () {
+      test('Accepts null byHour', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByHour(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -181,19 +181,19 @@ void main() {
         expect(rule.byHour, isNull);
       });
 
-      test('throws ArgumentError for byHour below 0', () {
+      test('Throws ArgumentError for byHour below 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByHour({-1, 12}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byHour above 23', () {
+      test('Throws ArgumentError for byHour above 23', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByHour({12, 24}), throwsArgumentError);
       });
     });
 
     group('setByDay', () {
-      test('accepts valid byDay values', () {
+      test('Accepts valid byDay values', () {
         final builder = RecurrenceRuleBuilder();
         final byDay = {
           ByDay(Weekday.mo),
@@ -208,7 +208,7 @@ void main() {
         expect(rule.byDay, byDay);
       });
 
-      test('accepts null byDay', () {
+      test('Accepts null byDay', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByDay(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -219,7 +219,7 @@ void main() {
     });
 
     group('setByMonthDay validation', () {
-      test('accepts valid positive byMonthDay values', () {
+      test('Accepts valid positive byMonthDay values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMonthDay({1, 15, 31});
         builder.setFreq(RecurrenceFrequency.monthly);
@@ -228,7 +228,7 @@ void main() {
         expect(rule.byMonthDay, {1, 15, 31});
       });
 
-      test('accepts valid negative byMonthDay values', () {
+      test('Accepts valid negative byMonthDay values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMonthDay({-1, -15, -31});
         builder.setFreq(RecurrenceFrequency.monthly);
@@ -237,7 +237,7 @@ void main() {
         expect(rule.byMonthDay, {-1, -15, -31});
       });
 
-      test('accepts null byMonthDay', () {
+      test('Accepts null byMonthDay', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMonthDay(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -246,24 +246,24 @@ void main() {
         expect(rule.byMonthDay, isNull);
       });
 
-      test('throws ArgumentError for byMonthDay of 0', () {
+      test('Throws ArgumentError for byMonthDay of 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMonthDay({0, 15}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byMonthDay below -31', () {
+      test('Throws ArgumentError for byMonthDay below -31', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMonthDay({-32, -1}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byMonthDay above 31', () {
+      test('Throws ArgumentError for byMonthDay above 31', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMonthDay({15, 32}), throwsArgumentError);
       });
     });
 
     group('setByYearDay validation', () {
-      test('accepts valid positive byYearDay values', () {
+      test('Accepts valid positive byYearDay values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByYearDay({1, 100, 366});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -272,7 +272,7 @@ void main() {
         expect(rule.byYearDay, {1, 100, 366});
       });
 
-      test('accepts valid negative byYearDay values', () {
+      test('Accepts valid negative byYearDay values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByYearDay({-1, -100, -366});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -281,7 +281,7 @@ void main() {
         expect(rule.byYearDay, {-1, -100, -366});
       });
 
-      test('accepts null byYearDay', () {
+      test('Accepts null byYearDay', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByYearDay(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -290,24 +290,24 @@ void main() {
         expect(rule.byYearDay, isNull);
       });
 
-      test('throws ArgumentError for byYearDay of 0', () {
+      test('Throws ArgumentError for byYearDay of 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByYearDay({0, 100}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byYearDay below -366', () {
+      test('Throws ArgumentError for byYearDay below -366', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByYearDay({-367, -1}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byYearDay above 366', () {
+      test('Throws ArgumentError for byYearDay above 366', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByYearDay({100, 367}), throwsArgumentError);
       });
     });
 
     group('setByWeekNo validation', () {
-      test('accepts valid positive byWeekNo values', () {
+      test('Accepts valid positive byWeekNo values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByWeekNo({1, 26, 53});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -316,7 +316,7 @@ void main() {
         expect(rule.byWeekNo, {1, 26, 53});
       });
 
-      test('accepts valid negative byWeekNo values', () {
+      test('Accepts valid negative byWeekNo values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByWeekNo({-1, -26, -53});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -325,7 +325,7 @@ void main() {
         expect(rule.byWeekNo, {-1, -26, -53});
       });
 
-      test('accepts null byWeekNo', () {
+      test('Accepts null byWeekNo', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByWeekNo(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -334,24 +334,24 @@ void main() {
         expect(rule.byWeekNo, isNull);
       });
 
-      test('throws ArgumentError for byWeekNo of 0', () {
+      test('Throws ArgumentError for byWeekNo of 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByWeekNo({0, 26}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byWeekNo below -53', () {
+      test('Throws ArgumentError for byWeekNo below -53', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByWeekNo({-54, -1}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byWeekNo above 53', () {
+      test('Throws ArgumentError for byWeekNo above 53', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByWeekNo({26, 54}), throwsArgumentError);
       });
     });
 
     group('setByMonth validation', () {
-      test('accepts valid byMonth values', () {
+      test('Accepts valid byMonth values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMonth({1, 6, 12});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -360,7 +360,7 @@ void main() {
         expect(rule.byMonth, {1, 6, 12});
       });
 
-      test('accepts null byMonth', () {
+      test('Accepts null byMonth', () {
         final builder = RecurrenceRuleBuilder();
         builder.setByMonth(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -369,19 +369,19 @@ void main() {
         expect(rule.byMonth, isNull);
       });
 
-      test('throws ArgumentError for byMonth below 1', () {
+      test('Throws ArgumentError for byMonth below 1', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMonth({0, 6}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for byMonth above 12', () {
+      test('Throws ArgumentError for byMonth above 12', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setByMonth({6, 13}), throwsArgumentError);
       });
     });
 
     group('setBySetPos validation', () {
-      test('accepts valid positive bySetPos values', () {
+      test('Accepts valid positive bySetPos values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setBySetPos({1, 100, 366});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -390,7 +390,7 @@ void main() {
         expect(rule.bySetPos, {1, 100, 366});
       });
 
-      test('accepts valid negative bySetPos values', () {
+      test('Accepts valid negative bySetPos values', () {
         final builder = RecurrenceRuleBuilder();
         builder.setBySetPos({-1, -100, -366});
         builder.setFreq(RecurrenceFrequency.yearly);
@@ -399,7 +399,7 @@ void main() {
         expect(rule.bySetPos, {-1, -100, -366});
       });
 
-      test('accepts null bySetPos', () {
+      test('Accepts null bySetPos', () {
         final builder = RecurrenceRuleBuilder();
         builder.setBySetPos(null);
         builder.setFreq(RecurrenceFrequency.daily);
@@ -408,24 +408,24 @@ void main() {
         expect(rule.bySetPos, isNull);
       });
 
-      test('throws ArgumentError for bySetPos of 0', () {
+      test('Throws ArgumentError for bySetPos of 0', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setBySetPos({0, 100}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for bySetPos below -366', () {
+      test('Throws ArgumentError for bySetPos below -366', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setBySetPos({-367, -1}), throwsArgumentError);
       });
 
-      test('throws ArgumentError for bySetPos above 366', () {
+      test('Throws ArgumentError for bySetPos above 366', () {
         final builder = RecurrenceRuleBuilder();
         expect(() => builder.setBySetPos({100, 367}), throwsArgumentError);
       });
     });
 
     group('Complex scenarios', () {
-      test('builds complete recurrence rule with all properties', () {
+      test('Builds complete recurrence rule with all properties', () {
         final builder = RecurrenceRuleBuilder();
         final until = CalDateTime.utc(2025, 12, 31, 23, 59, 59);
 
@@ -454,7 +454,7 @@ void main() {
         expect(rule.wkst, Weekday.mo);
       });
 
-      test('reuses builder after clear', () {
+      test('Reuses builder after clear', () {
         final builder = RecurrenceRuleBuilder();
         builder.setFreq(RecurrenceFrequency.daily);
         builder.setCount(10);

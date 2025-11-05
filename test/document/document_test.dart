@@ -203,7 +203,7 @@ void main() {
   });
 
   group('CalendarDocument data model', () {
-    test('can be created with properties and components', () {
+    test('Can be created with properties and components', () {
       final doc = CalendarDocument(
         properties: [
           CalendarProperty(name: 'VERSION', value: '2.0'),
@@ -217,7 +217,7 @@ void main() {
       expect(doc.components.length, 1);
     });
 
-    test('can be created empty', () {
+    test('Can be created empty', () {
       const doc = CalendarDocument();
 
       expect(doc.name, 'VCALENDAR');
@@ -226,7 +226,7 @@ void main() {
       expect(doc.lineNumber, 0);
     });
 
-    test('has correct line number', () {
+    test('Has correct line number', () {
       const doc = CalendarDocument(lineNumber: 42);
 
       expect(doc.lineNumber, 42);
@@ -234,7 +234,7 @@ void main() {
   });
 
   group('CalendarDocumentComponent data model', () {
-    test('can be created with name only', () {
+    test('Can be created with name only', () {
       const component = CalendarDocumentComponent(name: 'VEVENT');
 
       expect(component.name, 'VEVENT');
@@ -243,7 +243,7 @@ void main() {
       expect(component.lineNumber, 0);
     });
 
-    test('can be created with all parameters', () {
+    test('Can be created with all parameters', () {
       final component = CalendarDocumentComponent(
         name: 'VEVENT',
         properties: [CalendarProperty(name: 'SUMMARY', value: 'Test Event')],
@@ -357,7 +357,7 @@ void main() {
       expect(results, isEmpty);
     });
 
-    test('component returns first matching component', () {
+    test('Component returns first matching component', () {
       final component = CalendarDocumentComponent(
         name: 'VCALENDAR',
         components: [
@@ -372,7 +372,7 @@ void main() {
       expect(event!.name, 'VEVENT');
     });
 
-    test('component returns null when not found', () {
+    test('Component returns null when not found', () {
       const component = CalendarDocumentComponent(
         name: 'VCALENDAR',
         components: [],
@@ -389,7 +389,7 @@ void main() {
   });
 
   group('CalendarProperty data model', () {
-    test('can be created with name and value', () {
+    test('Can be created with name and value', () {
       const property = CalendarProperty(name: 'SUMMARY', value: 'Test Event');
 
       expect(property.name, 'SUMMARY');
@@ -398,7 +398,7 @@ void main() {
       expect(property.lineNumber, 0);
     });
 
-    test('can be created with parameters', () {
+    test('Can be created with parameters', () {
       final property = CalendarProperty(
         name: 'DTSTART',
         value: '20250101T100000',
@@ -415,7 +415,7 @@ void main() {
       expect(property.parameters['VALUE'], ['DATE-TIME']);
     });
 
-    test('can be created with line number', () {
+    test('Can be created with line number', () {
       const property = CalendarProperty(
         name: 'SUMMARY',
         value: 'Test',

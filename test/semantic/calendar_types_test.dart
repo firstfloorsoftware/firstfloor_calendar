@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('AttachmentBinary', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final att1 = AttachmentBinary(
         fmtType: 'image/png',
         encoding: 'BASE64',
@@ -53,7 +53,7 @@ void main() {
   });
 
   group('AttachmentUri', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final att1 = AttachmentUri(
         fmtType: 'image/png',
         uri: Uri.parse('https://example.com/image.png'),
@@ -80,7 +80,7 @@ void main() {
   });
 
   group('ByDay', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final bd1 = ByDay(Weekday.mo, ordinal: 1);
       final bd2 = ByDay(Weekday.mo, ordinal: 1);
       final bd3 = ByDay(Weekday.mo, ordinal: 2);
@@ -104,7 +104,7 @@ void main() {
   });
 
   group('CalDuration', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final dur1 = CalDuration(days: 1, hours: 2, minutes: 30);
       final dur2 = CalDuration(days: 1, hours: 2, minutes: 30);
       final dur3 = CalDuration(days: 1, hours: 3, minutes: 30);
@@ -131,7 +131,7 @@ void main() {
   });
 
   group('CalTime', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final t1 = CalTime.local(10, 30, 45);
       final t2 = CalTime.local(10, 30, 45);
       final t3 = CalTime.local(10, 30, 0);
@@ -153,7 +153,7 @@ void main() {
   });
 
   group('CalendarUserAddress', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final addr1 = CalendarUserAddress(
         address: 'mailto:user@example.com',
         cn: 'John Doe',
@@ -174,7 +174,7 @@ void main() {
   });
 
   group('GeoCoordinate', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final geo1 = GeoCoordinate(latitude: 51.5074, longitude: -0.1278);
       final geo2 = GeoCoordinate(latitude: 51.5074, longitude: -0.1278);
       final geo3 = GeoCoordinate(latitude: 40.7128, longitude: -74.0060);
@@ -192,7 +192,7 @@ void main() {
   });
 
   group('Period', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final start = CalDateTime.local(2025, 1, 1, 10, 0, 0);
       final end = CalDateTime.local(2025, 1, 1, 11, 0, 0);
       final duration = CalDuration(hours: 1);
@@ -230,7 +230,7 @@ void main() {
   });
 
   group('RecurrenceDateTime', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final dt1 = CalDateTime.local(2025, 1, 1, 10, 0, 0);
       final dt2 = CalDateTime.local(2025, 1, 2, 10, 0, 0);
 
@@ -268,7 +268,7 @@ void main() {
   });
 
   group('UtcOffset', () {
-    test('equality works correctly', () {
+    test('Equality works correctly', () {
       final off1 = UtcOffset(sign: Sign.positive, hours: 5, minutes: 30);
       final off2 = UtcOffset(sign: Sign.positive, hours: 5, minutes: 30);
       final off3 = UtcOffset(sign: Sign.negative, hours: 8, minutes: 0);
