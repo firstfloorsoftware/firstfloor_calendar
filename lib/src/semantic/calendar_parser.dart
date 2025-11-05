@@ -52,7 +52,7 @@ class CalendarParser {
       'EXDATE': PropertyRule(maxOccurs: -1, parser: parseCalDateOrDateTimeList),
       'RELATED-TO': PropertyRule(maxOccurs: -1, parser: parseString),
       'REQUEST-STATUS': PropertyRule(maxOccurs: -1, parser: parseString),
-      'RESOURCE': PropertyRule(maxOccurs: -1, parser: parseCalAddress),
+      'RESOURCES': PropertyRule(maxOccurs: -1, parser: parseStringList),
       'RDATE': PropertyRule(maxOccurs: -1, parser: parseRecurrenceDateTime),
     },
     'VTODO': {
@@ -85,7 +85,7 @@ class CalendarParser {
       'EXDATE': PropertyRule(maxOccurs: -1, parser: parseCalDateOrDateTimeList),
       'RELATED-TO': PropertyRule(maxOccurs: -1, parser: parseString),
       'REQUEST-STATUS': PropertyRule(maxOccurs: -1, parser: parseString),
-      'RESOURCE': PropertyRule(maxOccurs: -1, parser: parseCalAddress),
+      'RESOURCES': PropertyRule(maxOccurs: -1, parser: parseStringList),
       'RDATE': PropertyRule(maxOccurs: -1, parser: parseRecurrenceDateTime),
     },
     'VJOURNAL': {

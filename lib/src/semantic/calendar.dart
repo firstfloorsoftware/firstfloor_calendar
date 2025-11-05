@@ -172,7 +172,7 @@ class EventComponent extends CalendarComponent {
   List<String> get requestStatus => values('REQUEST-STATUS');
 
   /// The list of resources associated with the event.
-  List<CalendarUserAddress> get resources => values('RESOURCES');
+  List<String> get resources => valuesUnion('RESOURCES');
 
   /// The list of recurrence dates associated with the event.
   List<RecurrenceDateTime> get rdates => values('RDATE');
@@ -294,7 +294,7 @@ class TodoComponent extends CalendarComponent {
   List<String> get requestStatus => values('REQUEST-STATUS');
 
   /// The list of resources associated with the todo.
-  List<CalendarUserAddress> get resources => values('RESOURCES');
+  List<String> get resources => valuesUnion('RESOURCES');
 
   /// The list of recurrence dates associated with the todo.
   List<RecurrenceDateTime> get rdates => values('RDATE');

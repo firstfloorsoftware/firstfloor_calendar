@@ -71,7 +71,7 @@ void main() {
       expect(filter.hasNoOccurrences(), false);
     });
 
-    test('null BYMONTH passes through unchanged', () {
+    test('Null BYMONTH passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.yearly);
       final filter = ByMonthFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
@@ -154,7 +154,7 @@ void main() {
       expect(result[0].toString(), '20250115');
     });
 
-    test('null BYWEEKNO passes through unchanged', () {
+    test('Null BYWEEKNO passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.yearly);
       final filter = ByWeekNoFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
@@ -240,7 +240,7 @@ void main() {
       expect(result[0].toString(), '20250215');
     });
 
-    test('null BYYEARDAY passes through unchanged', () {
+    test('Null BYYEARDAY passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.yearly);
       final filter = ByYearDayFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
@@ -352,7 +352,7 @@ void main() {
       expect(result[1].toString(), '20250115');
     });
 
-    test('null BYMONTHDAY passes through unchanged', () {
+    test('Null BYMONTHDAY passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.monthly);
       final filter = ByMonthDayFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
@@ -520,7 +520,7 @@ void main() {
       expect(result[1].toString(), '20250110');
     });
 
-    test('null BYDAY passes through unchanged', () {
+    test('Null BYDAY passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.weekly);
       final filter = ByDayFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
@@ -597,7 +597,7 @@ void main() {
       expect(result[0].time!.hour, 5);
     });
 
-    test('null BYHOUR passes through unchanged', () {
+    test('Null BYHOUR passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.daily);
       final filter = ByHourFilter(rrule);
       final source = [CalDateTime.local(2025, 1, 1, 10, 0, 0)];
@@ -659,7 +659,7 @@ void main() {
       expect(result[0].time!.minute, 0);
     });
 
-    test('null BYMINUTE passes through unchanged', () {
+    test('Null BYMINUTE passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.hourly);
       final filter = ByMinuteFilter(rrule);
       final source = [CalDateTime.local(2025, 1, 1, 10, 30, 0)];
@@ -705,7 +705,7 @@ void main() {
       expect(result[1].time!.second, 30);
     });
 
-    test('null BYSECOND passes through unchanged', () {
+    test('Null BYSECOND passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.minutely);
       final filter = BySecondFilter(rrule);
       final source = [CalDateTime.local(2025, 1, 1, 10, 0, 45)];
@@ -807,7 +807,7 @@ void main() {
       expect(result[0].toString(), '20250201');
     });
 
-    test('null BYSETPOS passes through unchanged', () {
+    test('Null BYSETPOS passes through unchanged', () {
       final rrule = RecurrenceRule(freq: RecurrenceFrequency.yearly);
       final filter = BySetPosFilter(rrule);
       final source = [CalDateTime.date(2025, 1, 1)];
