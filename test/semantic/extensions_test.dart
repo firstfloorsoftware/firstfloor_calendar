@@ -294,6 +294,65 @@ void main() {
       expect(event.isRecurring, isFalse);
     });
 
+    test('isAllDay returns true for date-only DTSTART', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-allday-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isAllDay, isTrue);
+    });
+
+    test('isAllDay returns false for datetime DTSTART', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-allday-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isAllDay, isFalse);
+    });
+
+    test('isAllDay returns false when DTSTART is null', () {
+      // Create an event without DTSTART property
+      final event = EventComponent(properties: {}, components: []);
+
+      expect(event.isAllDay, isFalse);
+    });
+
+    test('isAllDay returns true for date-only DTSTART with timezone', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-allday-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE;TZID=America/New_York:20250115\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isAllDay, isTrue);
+    });
+
+    test('isAllDay returns false for UTC datetime', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-allday-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000Z\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isAllDay, isFalse);
+    });
+
     test('occurrences generates correct occurrences', () {
       final parser = CalendarParser();
       final event = parser.parseComponentFromString<EventComponent>(

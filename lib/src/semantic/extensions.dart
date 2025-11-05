@@ -64,6 +64,8 @@ extension EventComponentExtensions on EventComponent {
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
   bool get isRecurring => rrule != null || rdates.isNotEmpty;
 
+  /// Returns true if this event is an all-day event
+  bool get isAllDay => dtstart?.isDate ?? false;
   /// Generates all occurrences of the event based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
   Iterable<CalDateTime> occurrences() {
