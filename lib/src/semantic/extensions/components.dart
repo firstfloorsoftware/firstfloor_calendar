@@ -30,11 +30,15 @@ extension EventComponentExtensions on EventComponent {
     final end = effectiveEnd;
     if (end != null && dtstart != null && end != dtstart) {
       final diff = end.native.difference(dtstart!.native);
+      final isNegative = diff.isNegative;
+      final absDiff = diff.abs();
+
       return CalDuration(
-        days: diff.inDays,
-        hours: diff.inHours % 24,
-        minutes: diff.inMinutes % 60,
-        seconds: diff.inSeconds % 60,
+        sign: isNegative ? Sign.negative : Sign.positive,
+        days: absDiff.inDays,
+        hours: absDiff.inHours % 24,
+        minutes: absDiff.inMinutes % 60,
+        seconds: absDiff.inSeconds % 60,
       );
     }
 
@@ -74,11 +78,15 @@ extension TodoComponentExtensions on TodoComponent {
 
     if (due != null && dtstart != null && due != dtstart) {
       final diff = due!.native.difference(dtstart!.native);
+      final isNegative = diff.isNegative;
+      final absDiff = diff.abs();
+
       return CalDuration(
-        days: diff.inDays,
-        hours: diff.inHours % 24,
-        minutes: diff.inMinutes % 60,
-        seconds: diff.inSeconds % 60,
+        sign: isNegative ? Sign.negative : Sign.positive,
+        days: absDiff.inDays,
+        hours: absDiff.inHours % 24,
+        minutes: absDiff.inMinutes % 60,
+        seconds: absDiff.inSeconds % 60,
       );
     }
 

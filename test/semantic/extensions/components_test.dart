@@ -187,6 +187,137 @@ void main() {
       expect(event.effectiveEnd, CalDateTime.local(2025, 1, 15, 9, 0, 0));
     });
 
+    test('effectiveDuration returns duration when present', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:PT2H30M\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.hours, 2);
+      expect(event.effectiveDuration!.minutes, 30);
+    });
+
+    test('effectiveDuration calculates from dtend when no duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T130000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.hours, 3);
+      expect(event.effectiveDuration!.minutes, 0);
+    });
+
+    test('effectiveDuration prefers duration over dtend when both present', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T120000\r\n'
+        'DURATION:PT1H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.hours, 1);
+      expect(event.effectiveDuration!.minutes, 0);
+    });
+
+    test('effectiveDuration returns null when no duration or dtend', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNull);
+    });
+
+    test('effectiveDuration returns null when dtstart is null', () {
+      final event = EventComponent(properties: {}, components: []);
+      expect(event.effectiveDuration, isNull);
+    });
+
+    test('effectiveDuration handles multi-day duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-5\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2DT5H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.days, 2);
+      expect(event.effectiveDuration!.hours, 5);
+    });
+
+    test('effectiveDuration calculates from multi-day dtend', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250117T150000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.days, 2);
+      expect(event.effectiveDuration!.hours, 5);
+    });
+
+    test('effectiveDuration handles negative duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-7\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:-PT1H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.sign, Sign.negative);
+      expect(event.effectiveDuration!.hours, 1);
+    });
+
+    test('effectiveDuration calculates negative from dtend before dtstart', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-duration-8\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T090000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveDuration, isNotNull);
+      expect(event.effectiveDuration!.sign, Sign.negative);
+      expect(event.effectiveDuration!.hours, 1);
+    });
+
     test('occurrences generates correct occurrences', () {
       final parser = CalendarParser();
       final event = parser.parseComponentFromString<EventComponent>(
@@ -265,6 +396,120 @@ void main() {
 
       final occurrences = todo.occurrences().toList();
       expect(occurrences, isEmpty);
+    });
+
+    test('effectiveDuration returns duration when present', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:PT3H\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.hours, 3);
+    });
+
+    test('effectiveDuration calculates from due when no duration', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250115T140000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.hours, 4);
+    });
+
+    test('effectiveDuration prefers duration over due when both present', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250115T130000\r\n'
+        'DURATION:PT2H\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.hours, 2);
+    });
+
+    test('effectiveDuration returns null when no duration or due', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNull);
+    });
+
+    test('effectiveDuration returns null when dtstart is null', () {
+      final todo = TodoComponent(properties: {}, components: []);
+      expect(todo.effectiveDuration, isNull);
+    });
+
+    test('effectiveDuration handles multi-day duration', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-5\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P3DT2H30M\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.days, 3);
+      expect(todo.effectiveDuration!.hours, 2);
+      expect(todo.effectiveDuration!.minutes, 30);
+    });
+
+    test('effectiveDuration calculates from multi-day due', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250118T123000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.days, 3);
+      expect(todo.effectiveDuration!.hours, 2);
+      expect(todo.effectiveDuration!.minutes, 30);
+    });
+
+    test('effectiveDuration returns null when due before dtstart', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo-duration-7\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250115T090000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.effectiveDuration, isNotNull);
+      expect(todo.effectiveDuration!.sign, Sign.negative);
+      expect(todo.effectiveDuration!.hours, 1);
     });
   });
 
