@@ -1,5 +1,3 @@
-import 'package:collection/collection.dart';
-
 import '../document/document.dart';
 import 'semantic.dart';
 
