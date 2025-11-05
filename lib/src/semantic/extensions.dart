@@ -276,6 +276,58 @@ extension EventIterableQuery on Iterable<EventComponent> {
   }
 }
 
+/// Represents a single todo occurrence.
+typedef TodoOccurrence = ({CalDateTime occurrence, TodoComponent todo});
+
+/// Query extensions for [Iterable]<[TodoComponent]> to enhance functionality.
+extension TodoIterableQuery on Iterable<TodoComponent> {
+  /// Finds all todo occurrences within the specified date range.
+  ///
+  /// [start] and [end] should be [CalDateTime] values that define the
+  /// inclusive date range. Use [CalDateTime.date] for all-day boundaries
+  /// or [CalDateTime] with time components for precise time ranges.
+  ///
+  /// For recurring todos without an end date, occurrences are generated
+  /// up to [end] only.
+  ///
+  /// Example with date-only boundaries:
+  /// ```dart
+  /// final start = CalDateTime.date(2025, 1, 1);
+  /// final end = CalDateTime.date(2025, 1, 31);
+  ///
+  /// for (final result in calendar.todos.inRange(start, end)) {
+  ///   print('${result.todo.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  ///
+  /// Example with date-time boundaries:
+  /// ```dart
+  /// final start = CalDateTime(2025, 1, 1, 9, 0, 0);
+  /// final end = CalDateTime(2025, 1, 31, 17, 0, 0);
+  ///
+  /// for (final result in calendar.todos.inRange(start, end)) {
+  ///   print('${result.todo.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  Iterable<TodoOccurrence> inRange(CalDateTime start, CalDateTime end) sync* {
+    if (start.isAfter(end)) {
+      throw ArgumentError('start must be before or equal to end');
+    }
+
+    for (final todo in this) {
+      for (final occurrence in todo.occurrences()) {
+        // Stop if past the range
+        if (occurrence.isAfter(end)) break;
+
+        // Include if within range (inclusive on both ends)
+        if (!occurrence.isBefore(start) && !occurrence.isAfter(end)) {
+          yield (occurrence: occurrence, todo: todo);
+        }
+      }
+    }
+  }
+}
+
 /// Query extensions for [Calendar] to enhance functionality.
 extension CalendarQuery on Calendar {
   /// Finds all event occurrences within the specified date range.
@@ -301,4 +353,28 @@ extension CalendarQuery on Calendar {
   /// ```
   Iterable<EventOccurrence> eventsInRange(CalDateTime start, CalDateTime end) =>
       events.inRange(start, end);
+
+  /// Finds all todo occurrences within the specified date range.
+  ///
+  /// This is a convenience method that delegates to [TodoIterableQuery.inRange]
+  /// on the calendar's todos.
+  ///
+  /// [start] and [end] should be [CalDateTime] values that define the
+  /// inclusive date range. Use [CalDateTime.date] for all-day boundaries
+  /// or [CalDateTime] with time components for precise time ranges.
+  ///
+  /// For recurring todos without an end date, occurrences are generated
+  /// up to [end] only.
+  ///
+  /// Example:
+  /// ```dart
+  /// final start = CalDateTime.date(2025, 1, 1);
+  /// final end = CalDateTime.date(2025, 1, 31);
+  ///
+  /// for (final result in calendar.todosInRange(start, end)) {
+  ///   print('${result.todo.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  Iterable<TodoOccurrence> todosInRange(CalDateTime start, CalDateTime end) =>
+      todos.inRange(start, end);
 }
