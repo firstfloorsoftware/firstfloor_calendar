@@ -652,12 +652,45 @@ void main() {
         rdates: rdates,
       );
 
-      // note: occurences are not sorted in the output, current implementation
-      // has rdates added after rrule occurrences
+      // Occurrences are chronologically sorted (RRULE and RDATE merged)
       final actual = occurrences(iterator);
 
-      expect(actual, ['20250101', '20250108', '20250105']);
+      expect(actual, ['20250101', '20250105', '20250108']);
     });
+
+    test(
+      'RDATE occurrences are sorted chronologically even when out of order',
+      () {
+        final dtstart = CalDateTime.date(2025, 1, 1);
+        final rrule = RecurrenceRule(
+          freq: RecurrenceFrequency.weekly,
+          count: 2,
+        );
+
+        // RDATEs are intentionally out of chronological order
+        final rdates = [
+          RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 15)), // Later
+          RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 5)), // Earlier
+          RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 20)), // Latest
+        ];
+
+        final iterator = RecurrenceIterator(
+          dtstart: dtstart,
+          rrule: rrule,
+          rdates: rdates,
+        );
+
+        final actual = occurrences(iterator);
+
+        expect(actual, [
+          '20250101', // RRULE
+          '20250105', // RDATE (earlier)
+          '20250108', // RRULE
+          '20250115', // RDATE (middle)
+          '20250120', // RDATE (later)
+        ]);
+      },
+    );
   });
 
   group('RecurrenceIterator - Edge Cases', () {
@@ -746,6 +779,141 @@ void main() {
       for (final occ in actual) {
         expect(occ.time!.tzid, 'America/New_York');
       }
+    });
+  });
+
+  group('RecurrenceIterator - Chronological Ordering', () {
+    test('Interleaved RRULE and RDATE occurrences maintain strict order', () {
+      final dtstart = CalDateTime.date(2025, 1, 1);
+      final rrule = RecurrenceRule(
+        freq: RecurrenceFrequency.daily,
+        interval: 3,
+        count: 5,
+      );
+
+      // RDATEs that fall between RRULE occurrences
+      final rdates = [
+        RecurrenceDateTime.dateTime(
+          CalDateTime.date(2025, 1, 2),
+        ), // Between 1 and 4
+        RecurrenceDateTime.dateTime(
+          CalDateTime.date(2025, 1, 5),
+        ), // Between 4 and 7
+        RecurrenceDateTime.dateTime(
+          CalDateTime.date(2025, 1, 9),
+        ), // Between 7 and 10
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 15)), // After 13
+      ];
+
+      final iterator = RecurrenceIterator(
+        dtstart: dtstart,
+        rrule: rrule,
+        rdates: rdates,
+      );
+
+      final actual = occurrences(iterator);
+
+      // Verify strict chronological order with mixed sources
+      expect(actual, [
+        '20250101', // RRULE (dtstart)
+        '20250102', // RDATE
+        '20250104', // RRULE
+        '20250105', // RDATE
+        '20250107', // RRULE
+        '20250109', // RDATE
+        '20250110', // RRULE
+        '20250113', // RRULE
+        '20250115', // RDATE
+      ]);
+    });
+
+    test('Large RDATE list with RRULE maintains chronological order', () {
+      final dtstart = CalDateTime.date(2025, 1, 1);
+      final rrule = RecurrenceRule(freq: RecurrenceFrequency.weekly, count: 10);
+
+      // RRULE generates: 1/1, 1/8, 1/15, 1/22, 1/29, 2/5, 2/12, 2/19, 2/26, 3/5
+      // Create RDATEs scattered throughout (avoiding RRULE dates)
+      final rdates = <RecurrenceDateTime>[
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 3)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 5)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 10)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 12)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 17)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 20)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 24)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 27)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 1, 31)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 3)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 7)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 10)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 14)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 17)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 21)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 24)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 2, 28)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 3, 3)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 3, 7)),
+        RecurrenceDateTime.dateTime(CalDateTime.date(2025, 3, 10)),
+      ];
+
+      final iterator = RecurrenceIterator(
+        dtstart: dtstart,
+        rrule: rrule,
+        rdates: rdates,
+      );
+
+      final allOccurrences = iterator.occurrences().toList();
+
+      // Verify we have all occurrences (10 RRULE + 20 RDATE = 30)
+      expect(allOccurrences.length, 30);
+
+      // Verify strict chronological ordering throughout entire sequence
+      for (var i = 0; i < allOccurrences.length - 1; i++) {
+        expect(
+          allOccurrences[i].isBefore(allOccurrences[i + 1]),
+          isTrue,
+          reason:
+              'Occurrence $i (${allOccurrences[i]}) should be before ${i + 1} (${allOccurrences[i + 1]})',
+        );
+      }
+    });
+
+    test('Ordering maintained with time components (not just dates)', () {
+      final dtstart = CalDateTime.local(2025, 1, 1, 10, 0, 0);
+      final rrule = RecurrenceRule(freq: RecurrenceFrequency.daily, count: 3);
+
+      // RDATEs on same days but different times
+      final rdates = [
+        RecurrenceDateTime.dateTime(
+          CalDateTime.local(2025, 1, 1, 8, 0, 0),
+        ), // Before dtstart time
+        RecurrenceDateTime.dateTime(
+          CalDateTime.local(2025, 1, 1, 12, 0, 0),
+        ), // After dtstart time
+        RecurrenceDateTime.dateTime(
+          CalDateTime.local(2025, 1, 2, 9, 0, 0),
+        ), // Between day 2 RRULE times
+        RecurrenceDateTime.dateTime(CalDateTime.local(2025, 1, 2, 11, 0, 0)),
+      ];
+
+      final iterator = RecurrenceIterator(
+        dtstart: dtstart,
+        rrule: rrule,
+        rdates: rdates,
+      );
+
+      final actual = occurrences(iterator);
+
+      // Verify chronological order with time precision
+      expect(actual, [
+        '20250101T080000', // RDATE 8am
+        '20250101T100000', // RRULE 10am (dtstart)
+        '20250101T120000', // RDATE 12pm
+        '20250102T090000', // RDATE 9am
+        '20250102T100000', // RRULE 10am
+        '20250102T110000', // RDATE 11am
+        '20250103T100000', // RRULE 10am
+      ]);
     });
   });
 

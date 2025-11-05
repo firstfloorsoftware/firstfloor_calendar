@@ -36,40 +36,82 @@ class RecurrenceIterator {
 
   /// Generates all occurrences of the event, applying exclusions and
   /// ensuring no duplicates.
+  ///
+  /// Occurrences are generated in chronological order by merging RRULE-based
+  /// occurrences with RDATE values. This maintains lazy evaluation for
+  /// potentially infinite recurrence rules while ensuring proper ordering.
   Iterable<CalDateTime> occurrences() sync* {
-    final exclude = <CalDateTime>{};
-    exclude.addAll(exdates ?? []);
+    // Only store EXDATEs (finite set) for exclusion checking
+    final exdateSet = <CalDateTime>{};
+    exdateSet.addAll(exdates ?? []);
 
+    // Track last yielded occurrence for duplicate detection (O(1) memory).
+    // This sliding window approach works because:
+    // 1. Both RRULE and RDATE streams are sorted chronologically
+    // 2. Duplicates can only occur consecutively (same timestamp from both sources)
+    // 3. We only need to compare with the immediately previous occurrence
+    // This prevents memory leaks from storing all occurrences for infinite RRULEs.
+    CalDateTime? lastYielded;
+
+    // Pre-sort RDATEs (finite list) for chronological merging
+    final sortedRDates = <CalDateTime>[];
+    if (rdates != null) {
+      for (final rdate in rdates!) {
+        if (rdate.isPeriod) {
+          sortedRDates.add(rdate.period!.start);
+        } else {
+          sortedRDates.add(rdate.dateTime!);
+        }
+      }
+      sortedRDates.sort();
+    }
+
+    var rdateIndex = 0;
+
+    // Merge RRULE occurrences and RDATEs in chronological order
     for (var o in _occurrences()) {
-      // apply exclusions
-      if (exclude.contains(o)) continue;
+      // Yield all RDATEs that come before this RRULE occurrence
+      while (rdateIndex < sortedRDates.length &&
+          sortedRDates[rdateIndex].isBefore(o)) {
+        final rdate = sortedRDates[rdateIndex++];
 
-      // ensure we don't yield duplicates
-      exclude.add(o);
+        // Skip if excluded (EXDATE) or duplicate (same as last yielded)
+        if (exdateSet.contains(rdate)) continue;
+        if (lastYielded == rdate) continue;
 
+        lastYielded = rdate;
+        yield rdate;
+      }
+
+      // Now yield the RRULE occurrence
+      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
+      if (exdateSet.contains(o)) continue;
+      if (lastYielded == o) continue;
+
+      lastYielded = o;
       yield o;
+    }
+
+    // Yield any remaining RDATEs after all RRULE occurrences
+    while (rdateIndex < sortedRDates.length) {
+      final rdate = sortedRDates[rdateIndex++];
+
+      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
+      if (exdateSet.contains(rdate)) continue;
+      if (lastYielded == rdate) continue;
+
+      lastYielded = rdate;
+      yield rdate;
     }
   }
 
   Iterable<CalDateTime> _occurrences() sync* {
-    // include RRULE
+    // Generate RRULE-based occurrences
     if (rrule != null) {
       yield* _generate(rrule!);
     } else {
       // if no RRULE, just yield DTSTART once
       yield dtstart;
-    }
-
-    // include RDATEs
-    if (rdates != null) {
-      for (final rdate in rdates!) {
-        if (rdate.isPeriod) {
-          // Yield the start datetime of the period
-          yield rdate.period!.start;
-        } else {
-          yield rdate.dateTime!;
-        }
-      }
     }
   }
 
