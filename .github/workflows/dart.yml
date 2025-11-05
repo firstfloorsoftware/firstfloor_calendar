@@ -20,5 +20,12 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze project source
         run: dart analyze --fatal-infos
-      - name: Run tests
-        run: dart test
+      - name: Install coverage
+        run: dart pub global activate coverage
+      - name: Test with coverage
+        run: dart pub global run coverage:test_with_coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: firstfloorsoftware/firstfloor_calendar

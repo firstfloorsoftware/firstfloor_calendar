@@ -1,6 +1,7 @@
 # firstfloor_calendar
 
 [![Pub Package](https://img.shields.io/pub/v/firstfloor_calendar.svg)](https://pub.dev/packages/firstfloor_calendar)
+[![codecov](https://codecov.io/github/firstfloorsoftware/firstfloor_calendar/graph/badge.svg?token=W97YVE1EI6)](https://codecov.io/github/firstfloorsoftware/firstfloor_calendar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Dart library for parsing iCalendar (.ics) files with RFC 5545 support.
