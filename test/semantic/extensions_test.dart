@@ -122,7 +122,11 @@ void main() {
         properties: {
           'UID': [
             PropertyValue(
-              property: CalendarProperty(name: 'UID', value: 'test-4', lineNumber: 1),
+              property: CalendarProperty(
+                name: 'UID',
+                value: 'test-4',
+                lineNumber: 1,
+              ),
               value: 'test-4',
             ),
           ],
@@ -468,7 +472,11 @@ void main() {
       final component = CalendarDocumentComponent(
         name: 'VTIMEZONE',
         properties: [
-          CalendarProperty(name: 'TZID', value: 'America/New_York', lineNumber: 1),
+          CalendarProperty(
+            name: 'TZID',
+            value: 'America/New_York',
+            lineNumber: 1,
+          ),
         ],
         components: [],
       );
