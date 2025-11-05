@@ -80,10 +80,10 @@ extension EventComponentExtensions on EventComponent {
 
   /// Generates all occurrences of the event based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the event has no start date.
   Iterable<CalDateTime> occurrences() {
-    if (dtstart == null) {
-      throw StateError('No DTSTART provided for recurrence generation');
-    }
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
 
     final iterator = RecurrenceIterator(
       dtstart: dtstart!,
@@ -103,9 +103,13 @@ extension TodoComponentExtensions on TodoComponent {
 
   /// Generates all occurrences of the todo based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the todo has no start date.
   Iterable<CalDateTime> occurrences() {
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
+
     final iterator = RecurrenceIterator(
-      dtstart: dtstart,
+      dtstart: dtstart!,
       rrule: rrule,
       exdates: exdates,
       rdates: rdates,
@@ -122,9 +126,13 @@ extension JournalComponentExtensions on JournalComponent {
 
   /// Generates all occurrences of the journal based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the journal has no start date.
   Iterable<CalDateTime> occurrences() {
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
+
     final iterator = RecurrenceIterator(
-      dtstart: dtstart,
+      dtstart: dtstart!,
       rrule: rrule,
       exdates: exdates,
       rdates: rdates,

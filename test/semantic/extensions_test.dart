@@ -465,20 +465,12 @@ void main() {
       expect(occurrences[2], CalDateTime.local(2025, 1, 3, 10, 0, 0));
     });
 
-    test('occurrences throws StateError when DTSTART is null', () {
+    test('occurrences returns empty iterable when DTSTART is null', () {
       // Create an event without DTSTART property
       final event = EventComponent(properties: {}, components: []);
 
-      expect(
-        () => event.occurrences(),
-        throwsA(
-          isA<StateError>().having(
-            (e) => e.message,
-            'message',
-            'No DTSTART provided for recurrence generation',
-          ),
-        ),
-      );
+      final occurrences = event.occurrences().toList();
+      expect(occurrences, isEmpty);
     });
   });
 
@@ -526,6 +518,14 @@ void main() {
       expect(occurrences[0], CalDateTime.local(2025, 1, 1, 10, 0, 0));
       expect(occurrences[1], CalDateTime.local(2025, 1, 2, 10, 0, 0));
     });
+
+    test('occurrences returns empty iterable when DTSTART is null', () {
+      // Create a todo without DTSTART property
+      final todo = TodoComponent(properties: {}, components: []);
+
+      final occurrences = todo.occurrences().toList();
+      expect(occurrences, isEmpty);
+    });
   });
 
   group('JournalComponentExtensions', () {
@@ -571,6 +571,14 @@ void main() {
       expect(occurrences.length, 2);
       expect(occurrences[0], CalDateTime.local(2025, 1, 1, 10, 0, 0));
       expect(occurrences[1], CalDateTime.local(2025, 1, 2, 10, 0, 0));
+    });
+
+    test('occurrences returns empty iterable when DTSTART is null', () {
+      // Create a journal without DTSTART property
+      final journal = JournalComponent(properties: {}, components: []);
+
+      final occurrences = journal.occurrences().toList();
+      expect(occurrences, isEmpty);
     });
   });
 
