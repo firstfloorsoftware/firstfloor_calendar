@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../document/document.dart';
 import 'semantic.dart';
 
@@ -210,4 +212,85 @@ extension CalendarDocumentComponentExtensions on CalendarDocumentComponent {
     parser ??= CalendarParser();
     return parser.parseComponent(this);
   }
+}
+
+/// Represents a single event occurrence.
+typedef EventOccurrence = ({CalDateTime occurrence, EventComponent event});
+
+/// Query extensions for [Iterable]<[EventComponent]> to enhance functionality.
+extension EventIterableQuery on Iterable<EventComponent> {
+  /// Finds all event occurrences within the specified date range.
+  ///
+  /// [start] and [end] should be [CalDateTime] values that define the
+  /// inclusive date range. Use [CalDateTime.date] for all-day boundaries
+  /// or [CalDateTime] with time components for precise time ranges.
+  ///
+  /// For recurring events without an end date, occurrences are generated
+  /// up to [end] only.
+  ///
+  /// Example with date-only boundaries:
+  /// ```dart
+  /// final start = CalDateTime.date(2025, 1, 1);
+  /// final end = CalDateTime.date(2025, 1, 31);
+  ///
+  /// for (final result in calendar.events.inRange(start, end)) {
+  ///   print('${result.event.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  ///
+  /// Example with date-time boundaries:
+  /// ```dart
+  /// final start = CalDateTime(2025, 1, 1, 9, 0, 0);
+  /// final end = CalDateTime(2025, 1, 31, 17, 0, 0);
+  ///
+  /// for (final result in calendar.events.inRange(start, end)) {
+  ///   print('${result.event.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  Iterable<EventOccurrence> inRange(CalDateTime start, CalDateTime end) sync* {
+    if (start.isAfter(end)) {
+      throw ArgumentError('start must be before or equal to end');
+    }
+
+    for (final event in this) {
+      if (event.dtstart == null) continue;
+
+      for (final occurrence in event.occurrences()) {
+        // Stop if past the range
+        if (occurrence.isAfter(end)) break;
+
+        // Include if within range (inclusive on both ends)
+        if (!occurrence.isBefore(start) && !occurrence.isAfter(end)) {
+          yield (occurrence: occurrence, event: event);
+        }
+      }
+    }
+  }
+}
+
+/// Query extensions for [Calendar] to enhance functionality.
+extension CalendarQuery on Calendar {
+  /// Finds all event occurrences within the specified date range.
+  ///
+  /// This is a convenience method that delegates to [EventIterableQuery.inRange]
+  /// on the calendar's events.
+  ///
+  /// [start] and [end] should be [CalDateTime] values that define the
+  /// inclusive date range. Use [CalDateTime.date] for all-day boundaries
+  /// or [CalDateTime] with time components for precise time ranges.
+  ///
+  /// For recurring events without an end date, occurrences are generated
+  /// up to [end] only.
+  ///
+  /// Example:
+  /// ```dart
+  /// final start = CalDateTime.date(2025, 1, 1);
+  /// final end = CalDateTime.date(2025, 1, 31);
+  ///
+  /// for (final result in calendar.eventsInRange(start, end)) {
+  ///   print('${result.event.summary}: ${result.occurrence}');
+  /// }
+  /// ```
+  Iterable<EventOccurrence> eventsInRange(CalDateTime start, CalDateTime end) =>
+      events.inRange(start, end);
 }

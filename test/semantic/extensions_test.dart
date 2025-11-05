@@ -859,4 +859,552 @@ END:STANDARD''';
       expect(occurrences[2], CalDateTime.local(2027, 1, 1, 0, 0, 0));
     });
   });
+
+  group('EventIterableQuery', () {
+    group('inRange', () {
+      test('returns single non-recurring event within range', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test1
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DTEND:20250115T110000
+SUMMARY:Test Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 10, 0, 0));
+        expect(results[0].event.summary, 'Test Event');
+      });
+
+      test('excludes single event before range', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test2
+DTSTAMP:20250101T000000Z
+DTSTART:20241215T100000
+DTEND:20241215T110000
+SUMMARY:Past Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('excludes single event after range', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test3
+DTSTAMP:20250101T000000Z
+DTSTART:20250215T100000
+DTEND:20250215T110000
+SUMMARY:Future Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('includes event exactly at range start', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test4
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T000000
+DTEND:20250101T010000
+SUMMARY:Start Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, start);
+      });
+
+      test('includes event exactly at range end', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test5
+DTSTAMP:20250101T000000Z
+DTSTART:20250131T235959
+DTEND:20250131T235959
+SUMMARY:End Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, end);
+      });
+
+      test('filters multiple events correctly', () {
+        final parser = CalendarParser();
+        final events = [
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test6
+DTSTAMP:20250101T000000Z
+DTSTART:20241215T100000
+SUMMARY:Before Range
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test7
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T100000
+SUMMARY:In Range 1
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test8
+DTSTAMP:20250101T000000Z
+DTSTART:20250120T100000
+SUMMARY:In Range 2
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test9
+DTSTAMP:20250101T000000Z
+DTSTART:20250215T100000
+SUMMARY:After Range
+END:VEVENT'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = events.inRange(start, end).toList();
+
+        expect(results.length, 2);
+        expect(results[0].event.summary, 'In Range 1');
+        expect(results[1].event.summary, 'In Range 2');
+      });
+
+      test('handles recurring event with COUNT', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test10
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+DTEND:20250105T110000
+SUMMARY:Weekly Meeting
+RRULE:FREQ=WEEKLY;COUNT=4
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 4);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 5, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 12, 10, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 19, 10, 0, 0));
+        expect(results[3].occurrence, CalDateTime.local(2025, 1, 26, 10, 0, 0));
+      });
+
+      test('handles recurring event with UNTIL', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test11
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+DTEND:20250105T110000
+SUMMARY:Daily Standup
+RRULE:FREQ=DAILY;UNTIL=20250110T100000
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 6); // Jan 5-10
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 5, 10, 0, 0));
+        expect(results[5].occurrence, CalDateTime.local(2025, 1, 10, 10, 0, 0));
+      });
+
+      test('handles recurring event partially in range (starts before)', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test12
+DTSTAMP:20250101T000000Z
+DTSTART:20241220T100000
+DTEND:20241220T110000
+SUMMARY:Weekly Team Sync
+RRULE:FREQ=WEEKLY;COUNT=5
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        // Starts Dec 20, 27, Jan 3, 10, 17 - only Jan occurrences
+        expect(results.length, 3);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 3, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 10, 10, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 17, 10, 0, 0));
+      });
+
+      test('handles recurring event partially in range (ends after)', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test13
+DTSTAMP:20250101T000000Z
+DTSTART:20250120T100000
+DTEND:20250120T110000
+SUMMARY:Weekly Review
+RRULE:FREQ=WEEKLY;COUNT=5
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        // Jan 20, 27, Feb 3, 10, 17 - only Jan occurrences
+        expect(results.length, 2);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 20, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 27, 10, 0, 0));
+      });
+
+      test('handles infinite recurring event (stops at range end)', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test14
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+DTEND:20250101T110000
+SUMMARY:Forever Event
+RRULE:FREQ=WEEKLY
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        // Should stop at range end, not continue forever
+        expect(results.length, 5); // Jan 1, 8, 15, 22, 29
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 10, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 29, 10, 0, 0));
+      });
+
+      test('handles event with RDATE', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test15
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+DTEND:20250105T110000
+SUMMARY:Special Dates
+RDATE:20250112T100000
+RDATE:20250119T100000
+RDATE:20250226T100000
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        // DTSTART + 2 RDATEs in January (26th is in Feb)
+        expect(results.length, 3);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 5, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 12, 10, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 19, 10, 0, 0));
+      });
+
+      test('handles event with EXDATE', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test16
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+DTEND:20250105T110000
+SUMMARY:Weekly with Exceptions
+RRULE:FREQ=WEEKLY;COUNT=4
+EXDATE:20250112T100000
+EXDATE:20250126T100000
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        // 4 occurrences minus 2 exceptions = 2
+        expect(results.length, 2);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 5, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 19, 10, 0, 0));
+      });
+
+      test('handles all-day events with date-only range', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test17
+DTSTAMP:20250101T000000Z
+DTSTART;VALUE=DATE:20250115
+SUMMARY:All Day Event
+END:VEVENT''');
+
+        final start = CalDateTime.date(2025, 1, 1);
+        final end = CalDateTime.date(2025, 1, 31);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.date(2025, 1, 15));
+      });
+
+      test('handles all-day recurring events', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test18
+DTSTAMP:20250101T000000Z
+DTSTART;VALUE=DATE:20250101
+SUMMARY:Daily All-Day
+RRULE:FREQ=DAILY;COUNT=10
+END:VEVENT''');
+
+        final start = CalDateTime.date(2025, 1, 1);
+        final end = CalDateTime.date(2025, 1, 31);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 10);
+        expect(results[0].occurrence, CalDateTime.date(2025, 1, 1));
+        expect(results[9].occurrence, CalDateTime.date(2025, 1, 10));
+      });
+
+      test('handles empty event list', () {
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = <EventComponent>[].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('handles events without DTSTART', () {
+        // Create an event component directly without DTSTART
+        // (simulating a malformed or partially constructed event)
+        final event = EventComponent(properties: {}, components: []);
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('throws ArgumentError when start is after end', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test20
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Test Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 31, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+
+        expect(
+          () => [event].inRange(start, end).toList(),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+
+      test('handles same start and end (single moment)', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test21
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T120000
+SUMMARY:Exact Time Event
+END:VEVENT''');
+
+        final moment = CalDateTime.local(2025, 1, 15, 12, 0, 0);
+        final results = [event].inRange(moment, moment).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, moment);
+      });
+
+      test('handles complex recurring rule (monthly on specific day)', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test22
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+SUMMARY:First Monday
+RRULE:FREQ=MONTHLY;BYDAY=1MO;COUNT=6
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 6, 30, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 6);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 6, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 2, 3, 10, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 3, 3, 10, 0, 0));
+      });
+
+      test('handles mixed recurring and non-recurring events', () {
+        final parser = CalendarParser();
+        final events = [
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test23
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+SUMMARY:One-time Event
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test24
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T100000
+SUMMARY:Weekly Event
+RRULE:FREQ=WEEKLY;COUNT=3
+END:VEVENT'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = events.inRange(start, end).toList();
+
+        expect(results.length, 4); // 1 one-time + 3 recurring
+        expect(results[0].event.summary, 'One-time Event');
+        expect(results[1].event.summary, 'Weekly Event');
+        expect(results[2].event.summary, 'Weekly Event');
+        expect(results[3].event.summary, 'Weekly Event');
+      });
+
+      test('handles events across timezone boundaries', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test25
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000Z
+DTEND:20250115T110000Z
+SUMMARY:UTC Event
+END:VEVENT''');
+
+        final start = CalDateTime.utc(2025, 1, 15, 9, 0, 0);
+        final end = CalDateTime.utc(2025, 1, 15, 12, 0, 0);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.utc(2025, 1, 15, 10, 0, 0));
+      });
+
+      test('preserves event reference in results', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test26
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Test Event
+DESCRIPTION:Important meeting
+LOCATION:Conference Room A
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].event, same(event));
+        expect(results[0].event.description, 'Important meeting');
+        expect(results[0].event.location, 'Conference Room A');
+      });
+
+      test('handles large date range efficiently', () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test27
+DTSTAMP:20250101T000000Z
+DTSTART:20250615T100000
+SUMMARY:Mid-year Event
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = [event].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 6, 15, 10, 0, 0));
+      });
+
+      test('works with filtered event list', () {
+        final parser = CalendarParser();
+        final events = [
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test28
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T100000
+SUMMARY:Work Meeting
+CATEGORIES:WORK
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test29
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Personal Appointment
+CATEGORIES:PERSONAL
+END:VEVENT'''),
+          parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test30
+DTSTAMP:20250101T000000Z
+DTSTART:20250120T100000
+SUMMARY:Team Standup
+CATEGORIES:WORK
+END:VEVENT'''),
+        ];
+
+        // Filter for work events first, then find in range
+        final workEvents = events.where(
+          (e) => e.categories.any((c) => c == 'WORK'),
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = workEvents.inRange(start, end).toList();
+
+        expect(results.length, 2);
+        expect(results[0].event.summary, 'Work Meeting');
+        expect(results[1].event.summary, 'Team Standup');
+      });
+    });
+  });
 }
