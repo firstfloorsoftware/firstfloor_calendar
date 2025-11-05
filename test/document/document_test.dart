@@ -457,10 +457,10 @@ void main() {
       );
 
       final str = property.toString();
-      expect(str, startsWith('DTSTART;'));
-      expect(str, contains('TZID=America/New_York'));
-      expect(str, contains('VALUE=DATE-TIME'));
-      expect(str, endsWith(':20250101T100000'));
+      expect(
+        str,
+        'DTSTART;TZID=America/New_York;VALUE=DATE-TIME:20250101T100000',
+      );
     });
 
     test('toString formats parameter with multiple values', () {
