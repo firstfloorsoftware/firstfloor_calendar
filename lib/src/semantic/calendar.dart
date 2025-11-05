@@ -222,7 +222,7 @@ class TodoComponent extends CalendarComponent {
   String? get description => valueOrNull('DESCRIPTION');
 
   /// The start date and time of the todo, if any.
-  CalDateTime get dtstart => value('DTSTART');
+  CalDateTime? get dtstart => valueOrNull('DTSTART');
 
   /// The geographical location of the todo, if any.
   GeoCoordinate? get geo => valueOrNull('GEO');
@@ -330,8 +330,8 @@ class JournalComponent extends CalendarComponent {
   /// The creation date and time of the journal, if any.
   CalDateTime? get created => valueOrNull('CREATED');
 
-  /// The description of the journal, if any.
-  CalDateTime get dtstart => value('DTSTART');
+  /// The start date and time of the journal, if any.
+  CalDateTime? get dtstart => valueOrNull('DTSTART');
 
   /// The geographical location of the journal, if any.
   CalDateTime? get lastModified => valueOrNull('LAST-MODIFIED');
