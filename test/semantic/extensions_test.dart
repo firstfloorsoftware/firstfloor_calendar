@@ -866,6 +866,445 @@ END:STANDARD''';
       expect(occurrences[1], CalDateTime.local(2026, 1, 1, 0, 0, 0));
       expect(occurrences[2], CalDateTime.local(2027, 1, 1, 0, 0, 0));
     });
+
+    group('TimeZoneIterableQuery.inRange', () {
+      test('includes single timezone within range', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250115T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 2, 0, 0));
+        expect(results[0].timezone.tzoffsetTo.toString(), '+0000');
+      });
+
+      test('excludes single timezone before range', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20241215T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('excludes single timezone after range', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250215T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('includes timezone exactly at range start', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250101T000000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, start);
+      });
+
+      test('includes timezone exactly at range end', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250131T235959
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(
+          results[0].occurrence,
+          CalDateTime.local(2025, 1, 31, 23, 59, 59),
+        );
+      });
+
+      test('includes multiple single timezones in range', () {
+        final parser = CalendarParser();
+        final timezones = [
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20250105T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:DAYLIGHT
+DTSTART:20250315T020000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+END:DAYLIGHT'''),
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20251025T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = timezones.inRange(start, end).toList();
+
+        expect(results.length, 3);
+        expect(results[0].timezone.name, 'STANDARD');
+        expect(results[1].timezone.name, 'DAYLIGHT');
+        expect(results[2].timezone.name, 'STANDARD');
+      });
+
+      test(
+        'includes only occurrences within range for recurring timezone with COUNT',
+        () {
+          final parser = CalendarParser();
+          final timezone = parser
+              .parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20250105T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=WEEKLY;COUNT=10
+END:STANDARD''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [timezone].inRange(start, end).toList();
+
+          // Should get occurrences on Jan 12, 19, 26 (3 total)
+          expect(results.length, 3);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 12, 2, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 19, 2, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 26, 2, 0, 0),
+          );
+        },
+      );
+
+      test(
+        'includes only occurrences within range for recurring timezone with UNTIL',
+        () {
+          final parser = CalendarParser();
+          final timezone = parser
+              .parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20250101T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=DAILY;UNTIL=20250115T020000
+END:STANDARD''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 20, 23, 59, 59);
+          final results = [timezone].inRange(start, end).toList();
+
+          // Should get occurrences from Jan 10-15 (6 days)
+          expect(results.length, 6);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 10, 2, 0, 0),
+          );
+          expect(
+            results[5].occurrence,
+            CalDateTime.local(2025, 1, 15, 2, 0, 0),
+          );
+        },
+      );
+
+      test('stops generating at range end for infinite recurring timezone', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250101T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=WEEKLY
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        // Should get 5 occurrences (Jan 1, 8, 15, 22, 29)
+        expect(results.length, 5);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 2, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 29, 2, 0, 0));
+      });
+
+      test('handles recurring timezone starting before range', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20241220T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=WEEKLY;COUNT=8
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        // Started Dec 20, 2024, weekly for 8 occurrences
+        // Occurrences in Jan 2025: Jan 3, 10, 17, 24, 31
+        expect(results.length, 5);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 3, 2, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 31, 2, 0, 0));
+      });
+
+      test('handles recurring timezone with RDATE additions', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250101T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=WEEKLY;COUNT=2
+RDATE:20250115T020000
+RDATE:20250120T020000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        // 2 weekly occurrences (Jan 1, 8) + 2 RDATE (Jan 15, 20) = 4
+        expect(results.length, 4);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 2, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 8, 2, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 15, 2, 0, 0));
+        expect(results[3].occurrence, CalDateTime.local(2025, 1, 20, 2, 0, 0));
+      });
+
+      test('returns empty list when no timezones in range', () {
+        final parser = CalendarParser();
+        final timezones = [
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20240615T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20260215T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = timezones.inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('returns empty list for empty timezone list', () {
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = <TimeZoneSubComponent>[].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('throws ArgumentError when start is after end', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250115T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final end = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+
+        expect(
+          () => [timezone].inRange(start, end).toList(),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+
+      test('handles date-only range boundaries', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250115T000000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        // Use date-only boundaries for the range
+        final start = CalDateTime.date(2025, 1, 1);
+        final end = CalDateTime.date(2025, 1, 31);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 0, 0, 0));
+      });
+
+      test('handles yearly recurring timezone', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250315T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+RRULE:FREQ=YEARLY;COUNT=5
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2029, 12, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        // Yearly on March 15 for 5 years
+        expect(results.length, 5);
+        expect(results[0].occurrence, CalDateTime.local(2025, 3, 15, 2, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2026, 3, 15, 2, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2029, 3, 15, 2, 0, 0));
+      });
+
+      test('preserves timezone reference in results', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250115T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+TZNAME:EST
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].timezone, same(timezone));
+        expect(results[0].timezone.tznames, contains('EST'));
+      });
+
+      test('handles large date range efficiently', () {
+        final parser = CalendarParser();
+        final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
+          '''
+BEGIN:STANDARD
+DTSTART:20250615T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = [timezone].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 6, 15, 2, 0, 0));
+      });
+
+      test('works with filtered timezone list', () {
+        final parser = CalendarParser();
+        final timezones = [
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20251025T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:DAYLIGHT
+DTSTART:20250329T020000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+END:DAYLIGHT'''),
+          parser.parseComponentFromString<TimeZoneSubComponent>('''
+BEGIN:STANDARD
+DTSTART:20250105T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0000
+END:STANDARD'''),
+        ];
+
+        // Filter for STANDARD components first, then find in range
+        final standardTimezones = timezones.where(
+          (tz) => tz.name == 'STANDARD',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = standardTimezones.inRange(start, end).toList();
+
+        expect(results.length, 2);
+        expect(results[0].timezone.name, 'STANDARD');
+        expect(results[1].timezone.name, 'STANDARD');
+      });
+    });
   });
 
   group('EventIterableQuery', () {
@@ -1896,6 +2335,489 @@ END:VTODO'''),
         expect(results.length, 2);
         expect(results[0].todo.summary, 'High Priority Task');
         expect(results[1].todo.summary, 'Another High Priority');
+      });
+    });
+
+    group('JournalIterableQuery.inRange', () {
+      test('includes single journal within range', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test1
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Test Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 10, 0, 0));
+        expect(results[0].journal.summary, 'Test Journal');
+      });
+
+      test('excludes single journal before range', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test2
+DTSTAMP:20250101T000000Z
+DTSTART:20241215T100000
+SUMMARY:Past Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('excludes single journal after range', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test3
+DTSTAMP:20250101T000000Z
+DTSTART:20250215T100000
+SUMMARY:Future Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('includes journal exactly at range start', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test4
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T000000
+SUMMARY:Start Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, start);
+      });
+
+      test('includes journal exactly at range end', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test5
+DTSTAMP:20250101T000000Z
+DTSTART:20250131T235959
+SUMMARY:End Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(
+          results[0].occurrence,
+          CalDateTime.local(2025, 1, 31, 23, 59, 59),
+        );
+      });
+
+      test('includes multiple single journals in range', () {
+        final parser = CalendarParser();
+        final journals = [
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test6a
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T090000
+SUMMARY:Journal A
+END:VJOURNAL'''),
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test6b
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T140000
+SUMMARY:Journal B
+END:VJOURNAL'''),
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test6c
+DTSTAMP:20250101T000000Z
+DTSTART:20250125T160000
+SUMMARY:Journal C
+END:VJOURNAL'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = journals.inRange(start, end).toList();
+
+        expect(results.length, 3);
+        expect(results[0].journal.summary, 'Journal A');
+        expect(results[1].journal.summary, 'Journal B');
+        expect(results[2].journal.summary, 'Journal C');
+      });
+
+      test(
+        'includes only occurrences within range for recurring journal with COUNT',
+        () {
+          final parser = CalendarParser();
+          final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test7
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T100000
+SUMMARY:Weekly Recurring Journal
+RRULE:FREQ=WEEKLY;COUNT=10
+END:VJOURNAL''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [journal].inRange(start, end).toList();
+
+          // Should get occurrences on Jan 12, 19, 26 (3 total)
+          expect(results.length, 3);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 12, 10, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 19, 10, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 26, 10, 0, 0),
+          );
+        },
+      );
+
+      test(
+        'includes only occurrences within range for recurring journal with UNTIL',
+        () {
+          final parser = CalendarParser();
+          final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test8
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T090000
+SUMMARY:Daily Journal
+RRULE:FREQ=DAILY;UNTIL=20250115T090000
+END:VJOURNAL''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 20, 23, 59, 59);
+          final results = [journal].inRange(start, end).toList();
+
+          // Should get occurrences from Jan 10-15 (6 days)
+          expect(results.length, 6);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 10, 9, 0, 0),
+          );
+          expect(
+            results[5].occurrence,
+            CalDateTime.local(2025, 1, 15, 9, 0, 0),
+          );
+        },
+      );
+
+      test('stops generating at range end for infinite recurring journal', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test9
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+SUMMARY:Weekly Forever
+RRULE:FREQ=WEEKLY
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // Should get 5 occurrences (Jan 1, 8, 15, 22, 29)
+        expect(results.length, 5);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 10, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 29, 10, 0, 0));
+      });
+
+      test('handles recurring journal starting before range', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test10
+DTSTAMP:20241201T000000Z
+DTSTART:20241220T100000
+SUMMARY:Started Earlier
+RRULE:FREQ=WEEKLY;COUNT=8
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // Started Dec 20, 2024, weekly for 8 occurrences
+        // Occurrences in Jan 2025: Jan 3, 10, 17, 24, 31
+        expect(results.length, 5);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 3, 10, 0, 0));
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 31, 10, 0, 0));
+      });
+
+      test('handles recurring journal with EXDATE exclusions', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test11
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+SUMMARY:Daily with Exclusions
+RRULE:FREQ=DAILY;COUNT=10
+EXDATE:20250103T100000
+EXDATE:20250105T100000
+EXDATE:20250107T100000
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 10, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // 10 days minus 3 excluded days = 7 occurrences
+        expect(results.length, 7);
+        final occurrenceDates = results.map((r) => r.occurrence.day).toList();
+        expect(occurrenceDates, isNot(contains(3)));
+        expect(occurrenceDates, isNot(contains(5)));
+        expect(occurrenceDates, isNot(contains(7)));
+      });
+
+      test('handles recurring journal with RDATE additions', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test12
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+SUMMARY:With Extra Dates
+RRULE:FREQ=WEEKLY;COUNT=2
+RDATE:20250115T100000
+RDATE:20250120T100000
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // 2 weekly occurrences (Jan 1, 8) + 2 RDATE (Jan 15, 20) = 4
+        expect(results.length, 4);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 8, 10, 0, 0));
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 15, 10, 0, 0));
+        expect(results[3].occurrence, CalDateTime.local(2025, 1, 20, 10, 0, 0));
+      });
+
+      test('returns empty list when no journals in range', () {
+        final parser = CalendarParser();
+        final journals = [
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test13a
+DTSTAMP:20250101T000000Z
+DTSTART:20240615T100000
+SUMMARY:Past Journal
+END:VJOURNAL'''),
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test13b
+DTSTAMP:20250101T000000Z
+DTSTART:20260215T100000
+SUMMARY:Future Journal
+END:VJOURNAL'''),
+        ];
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = journals.inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('returns empty list for empty journal list', () {
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = <JournalComponent>[].inRange(start, end).toList();
+
+        expect(results.length, 0);
+      });
+
+      test('throws ArgumentError when start is after end', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test14
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Test Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final end = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+
+        expect(
+          () => [journal].inRange(start, end).toList(),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+
+      test('handles journals with date-only boundaries', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test15
+DTSTAMP:20250101T000000Z
+DTSTART;VALUE=DATE:20250115
+SUMMARY:All Day Journal
+END:VJOURNAL''');
+
+        final start = CalDateTime.date(2025, 1, 1);
+        final end = CalDateTime.date(2025, 1, 31);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.date(2025, 1, 15));
+      });
+
+      test('handles recurring journal with interval', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test16
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+SUMMARY:Every Other Day
+RRULE:FREQ=DAILY;INTERVAL=2;COUNT=10
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 20, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // Every 2 days: Jan 1, 3, 5, 7, 9, 11, 13, 15, 17, 19
+        expect(results.length, 10);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 3, 10, 0, 0));
+        expect(results[9].occurrence, CalDateTime.local(2025, 1, 19, 10, 0, 0));
+      });
+
+      test('handles monthly recurring journal', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test17
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Monthly Review
+RRULE:FREQ=MONTHLY;COUNT=6
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        // Monthly on 15th for 6 months
+        expect(results.length, 6);
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 10, 0, 0));
+        expect(results[1].occurrence, CalDateTime.local(2025, 2, 15, 10, 0, 0));
+        expect(results[5].occurrence, CalDateTime.local(2025, 6, 15, 10, 0, 0));
+      });
+
+      test('preserves journal reference in results', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test18
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Important Entry
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].journal, same(journal));
+        expect(results[0].journal.summary, 'Important Entry');
+      });
+
+      test('handles large date range efficiently', () {
+        final parser = CalendarParser();
+        final journal = parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test19
+DTSTAMP:20250101T000000Z
+DTSTART:20250615T100000
+SUMMARY:Mid-year Entry
+END:VJOURNAL''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+        final results = [journal].inRange(start, end).toList();
+
+        expect(results.length, 1);
+        expect(results[0].occurrence, CalDateTime.local(2025, 6, 15, 10, 0, 0));
+      });
+
+      test('works with filtered journal list', () {
+        final parser = CalendarParser();
+        final journals = [
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test20a
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T100000
+SUMMARY:Work Journal
+CATEGORIES:WORK
+END:VJOURNAL'''),
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test20b
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+SUMMARY:Personal Journal
+CATEGORIES:PERSONAL
+END:VJOURNAL'''),
+          parser.parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:test20c
+DTSTAMP:20250101T000000Z
+DTSTART:20250120T100000
+SUMMARY:Work Notes
+CATEGORIES:WORK
+END:VJOURNAL'''),
+        ];
+
+        // Filter for work journals first, then find in range
+        final workJournals = journals.where(
+          (j) => j.categories.any((c) => c == 'WORK'),
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = workJournals.inRange(start, end).toList();
+
+        expect(results.length, 2);
+        expect(results[0].journal.summary, 'Work Journal');
+        expect(results[1].journal.summary, 'Work Notes');
       });
     });
   });

@@ -249,3 +249,43 @@ class RecurrenceIterator {
     ];
   }
 }
+
+/// Extension providing query operations on [RecurrenceIterator].
+extension RecurrenceIteratorQuery on RecurrenceIterator {
+  /// Generates occurrences within the specified date range.
+  ///
+  /// [start] and [end] define the inclusive date range.
+  ///
+  /// Example:
+  /// ```dart
+  /// final iterator = RecurrenceIterator(
+  ///   dtstart: CalDateTime(2025, 1, 1, 10, 0, 0),
+  ///   rrule: RecurrenceRule(freq: Frequency.daily),
+  /// );
+  ///
+  /// final start = CalDateTime(2025, 1, 10, 0, 0, 0);
+  /// final end = CalDateTime(2025, 1, 20, 23, 59, 59);
+  ///
+  /// for (final occurrence in iterator.occurrencesInRange(start, end)) {
+  ///   print(occurrence); // Only occurrences from Jan 10-20
+  /// }
+  /// ```
+  Iterable<CalDateTime> occurrencesInRange(
+    CalDateTime start,
+    CalDateTime end,
+  ) sync* {
+    if (start.isAfter(end)) {
+      throw ArgumentError('start must be before or equal to end');
+    }
+
+    for (final o in occurrences()) {
+      // Skip occurrences before the range
+      if (o.isBefore(start)) continue;
+
+      // Stop when past the range (crucial for infinite recurrences)
+      if (o.isAfter(end)) break;
+
+      yield o;
+    }
+  }
+}
