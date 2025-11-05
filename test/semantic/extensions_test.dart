@@ -118,41 +118,7 @@ void main() {
 
     test('occurrences throws StateError when DTSTART is null', () {
       // Create an event without DTSTART property
-      final event = EventComponent(
-        properties: {
-          'UID': [
-            PropertyValue(
-              property: CalendarProperty(
-                name: 'UID',
-                value: 'test-4',
-                lineNumber: 1,
-              ),
-              value: 'test-4',
-            ),
-          ],
-          'DTSTAMP': [
-            PropertyValue(
-              property: CalendarProperty(
-                name: 'DTSTAMP',
-                value: '20250101T000000Z',
-                lineNumber: 2,
-              ),
-              value: CalDateTime.utc(2025, 1, 1, 0, 0, 0),
-            ),
-          ],
-          'RRULE': [
-            PropertyValue(
-              property: CalendarProperty(
-                name: 'RRULE',
-                value: 'FREQ=DAILY;COUNT=3',
-                lineNumber: 3,
-              ),
-              value: RecurrenceRule(freq: RecurrenceFrequency.daily, count: 3),
-            ),
-          ],
-        },
-        components: [],
-      );
+      final event = EventComponent(properties: {}, components: []);
 
       expect(
         () => event.occurrences(),
@@ -331,23 +297,14 @@ void main() {
     });
 
     test('toEvent converts VEVENT to EventComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VEVENT',
-        properties: [
-          CalendarProperty(name: 'UID', value: 'test-5', lineNumber: 1),
-          CalendarProperty(
-            name: 'DTSTAMP',
-            value: '20250101T000000Z',
-            lineNumber: 2,
-          ),
-          CalendarProperty(
-            name: 'DTSTART',
-            value: '20250101T100000',
-            lineNumber: 3,
-          ),
-          CalendarProperty(name: 'SUMMARY', value: 'Test Event', lineNumber: 4),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-5\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250101T100000\r\n'
+        'SUMMARY:Test Event\r\n'
+        'END:VEVENT',
       );
 
       final event = component.toEvent();
@@ -366,18 +323,13 @@ void main() {
     });
 
     test('toTodo converts VTODO to TodoComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VTODO',
-        properties: [
-          CalendarProperty(name: 'UID', value: 'test-todo', lineNumber: 1),
-          CalendarProperty(
-            name: 'DTSTAMP',
-            value: '20250101T000000Z',
-            lineNumber: 2,
-          ),
-          CalendarProperty(name: 'SUMMARY', value: 'Test Todo', lineNumber: 3),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VTODO\r\n'
+        'UID:test-todo\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'SUMMARY:Test Todo\r\n'
+        'END:VTODO',
       );
 
       final todo = component.toTodo();
@@ -396,22 +348,13 @@ void main() {
     });
 
     test('toJournal converts VJOURNAL to JournalComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VJOURNAL',
-        properties: [
-          CalendarProperty(name: 'UID', value: 'test-journal', lineNumber: 1),
-          CalendarProperty(
-            name: 'DTSTAMP',
-            value: '20250101T000000Z',
-            lineNumber: 2,
-          ),
-          CalendarProperty(
-            name: 'SUMMARY',
-            value: 'Test Journal',
-            lineNumber: 3,
-          ),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VJOURNAL\r\n'
+        'UID:test-journal\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'SUMMARY:Test Journal\r\n'
+        'END:VJOURNAL',
       );
 
       final journal = component.toJournal();
@@ -430,27 +373,14 @@ void main() {
     });
 
     test('toFreeBusy converts VFREEBUSY to FreeBusyComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VFREEBUSY',
-        properties: [
-          CalendarProperty(name: 'UID', value: 'test-freebusy', lineNumber: 1),
-          CalendarProperty(
-            name: 'DTSTAMP',
-            value: '20250101T000000Z',
-            lineNumber: 2,
-          ),
-          CalendarProperty(
-            name: 'DTSTART',
-            value: '20250101T080000Z',
-            lineNumber: 3,
-          ),
-          CalendarProperty(
-            name: 'DTEND',
-            value: '20250101T180000Z',
-            lineNumber: 4,
-          ),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VFREEBUSY\r\n'
+        'UID:test-freebusy\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250101T080000Z\r\n'
+        'DTEND:20250101T180000Z\r\n'
+        'END:VFREEBUSY',
       );
 
       final freebusy = component.toFreeBusy();
@@ -469,16 +399,11 @@ void main() {
     });
 
     test('toTimeZone converts VTIMEZONE to TimeZoneComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VTIMEZONE',
-        properties: [
-          CalendarProperty(
-            name: 'TZID',
-            value: 'America/New_York',
-            lineNumber: 1,
-          ),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VTIMEZONE\r\n'
+        'TZID:America/New_York\r\n'
+        'END:VTIMEZONE',
       );
 
       final timezone = component.toTimeZone();
@@ -497,13 +422,12 @@ void main() {
     });
 
     test('toAlarm converts VALARM to AlarmComponent', () {
-      final component = CalendarDocumentComponent(
-        name: 'VALARM',
-        properties: [
-          CalendarProperty(name: 'ACTION', value: 'DISPLAY', lineNumber: 1),
-          CalendarProperty(name: 'TRIGGER', value: '-PT15M', lineNumber: 2),
-        ],
-        components: [],
+      final parser = DocumentParser();
+      final component = parser.parseComponent(
+        'BEGIN:VALARM\r\n'
+        'ACTION:DISPLAY\r\n'
+        'TRIGGER:-PT15M\r\n'
+        'END:VALARM',
       );
 
       final alarm = component.toAlarm();
@@ -519,6 +443,71 @@ void main() {
       );
 
       expect(() => component.toAlarm(), throwsException);
+    });
+  });
+
+  group('TimeZoneSubComponentExtensions', () {
+    test('isRecurring returns true with RRULE', () {
+      final ics = '''BEGIN:STANDARD
+DTSTART:20250101T000000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+RRULE:FREQ=YEARLY
+END:STANDARD''';
+      final parser = CalendarParser();
+      final component = parser.parseComponentFromString<TimeZoneSubComponent>(
+        ics,
+      );
+
+      expect(component.isRecurring, isTrue);
+    });
+
+    test('isRecurring returns true with RDATE', () {
+      final ics = '''BEGIN:STANDARD
+DTSTART:20250101T000000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+RDATE:20260101T000000
+END:STANDARD''';
+      final parser = CalendarParser();
+      final component = parser.parseComponentFromString<TimeZoneSubComponent>(
+        ics,
+      );
+
+      expect(component.isRecurring, isTrue);
+    });
+
+    test('isRecurring returns false without RRULE or RDATE', () {
+      final ics = '''BEGIN:STANDARD
+DTSTART:20250101T000000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+END:STANDARD''';
+      final parser = CalendarParser();
+      final component = parser.parseComponentFromString<TimeZoneSubComponent>(
+        ics,
+      );
+
+      expect(component.isRecurring, isFalse);
+    });
+
+    test('occurrences returns iterator results', () {
+      final ics = '''BEGIN:STANDARD
+DTSTART:20250101T000000
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0100
+RRULE:FREQ=YEARLY;COUNT=3
+END:STANDARD''';
+      final parser = CalendarParser();
+      final component = parser.parseComponentFromString<TimeZoneSubComponent>(
+        ics,
+      );
+
+      final occurrences = component.occurrences().toList();
+      expect(occurrences.length, 3);
+      expect(occurrences[0], CalDateTime.local(2025, 1, 1, 0, 0, 0));
+      expect(occurrences[1], CalDateTime.local(2026, 1, 1, 0, 0, 0));
+      expect(occurrences[2], CalDateTime.local(2027, 1, 1, 0, 0, 0));
     });
   });
 }

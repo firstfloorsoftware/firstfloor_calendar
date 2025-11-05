@@ -519,10 +519,7 @@ PRODID:test''';
       final stream = Stream.value(content.codeUnits);
       final components = parser.parseComponents(stream);
 
-      expect(
-        components.toList(),
-        throwsA(isA<ParseException>()),
-      );
+      expect(components.toList(), throwsA(isA<ParseException>()));
     });
   });
 }
