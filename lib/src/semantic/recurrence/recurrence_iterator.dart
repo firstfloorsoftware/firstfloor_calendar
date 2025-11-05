@@ -64,8 +64,8 @@ class RecurrenceIterator {
     if (rdates != null) {
       for (final rdate in rdates!) {
         if (rdate.isPeriod) {
-          // TODO: support RDATE periods
-          throw UnsupportedError('RDATE periods are not supported yet');
+          // Yield the start datetime of the period
+          yield rdate.period!.start;
         } else {
           yield rdate.dateTime!;
         }
