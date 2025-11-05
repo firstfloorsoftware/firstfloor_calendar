@@ -13,6 +13,18 @@ extension CalDateTimeExtensions on CalDateTime {
     return native.isBefore(other.native);
   }
 
+  /// Adds a [CalDuration] to this date and returns the resulting date.
+  CalDateTime addDuration(CalDuration duration) {
+    final sign = duration.sign == Sign.negative ? -1 : 1;
+    return add(
+      weeks: duration.weeks * sign,
+      days: duration.days * sign,
+      hours: duration.hours * sign,
+      minutes: duration.minutes * sign,
+      seconds: duration.seconds * sign,
+    );
+  }
+
   /// The day of the year (1-365 or 1-366 in leap years).
   int get dayOfYear {
     final startOfYear = copyWith(
