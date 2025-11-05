@@ -115,6 +115,52 @@ void main() {
       expect(occurrences[1], CalDateTime.local(2025, 1, 2, 10, 0, 0));
       expect(occurrences[2], CalDateTime.local(2025, 1, 3, 10, 0, 0));
     });
+
+    test('occurrences throws StateError when DTSTART is null', () {
+      // Create an event without DTSTART property
+      final event = EventComponent(
+        properties: {
+          'UID': [
+            PropertyValue(
+              property: CalendarProperty(name: 'UID', value: 'test-4', lineNumber: 1),
+              value: 'test-4',
+            ),
+          ],
+          'DTSTAMP': [
+            PropertyValue(
+              property: CalendarProperty(
+                name: 'DTSTAMP',
+                value: '20250101T000000Z',
+                lineNumber: 2,
+              ),
+              value: CalDateTime.utc(2025, 1, 1, 0, 0, 0),
+            ),
+          ],
+          'RRULE': [
+            PropertyValue(
+              property: CalendarProperty(
+                name: 'RRULE',
+                value: 'FREQ=DAILY;COUNT=3',
+                lineNumber: 3,
+              ),
+              value: RecurrenceRule(freq: RecurrenceFrequency.daily, count: 3),
+            ),
+          ],
+        },
+        components: [],
+      );
+
+      expect(
+        () => event.occurrences(),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            'No DTSTART provided for recurrence generation',
+          ),
+        ),
+      );
+    });
   });
 
   group('TodoComponentExtensions', () {
@@ -377,6 +423,94 @@ void main() {
       );
 
       expect(() => component.toJournal(), throwsException);
+    });
+
+    test('toFreeBusy converts VFREEBUSY to FreeBusyComponent', () {
+      final component = CalendarDocumentComponent(
+        name: 'VFREEBUSY',
+        properties: [
+          CalendarProperty(name: 'UID', value: 'test-freebusy', lineNumber: 1),
+          CalendarProperty(
+            name: 'DTSTAMP',
+            value: '20250101T000000Z',
+            lineNumber: 2,
+          ),
+          CalendarProperty(
+            name: 'DTSTART',
+            value: '20250101T080000Z',
+            lineNumber: 3,
+          ),
+          CalendarProperty(
+            name: 'DTEND',
+            value: '20250101T180000Z',
+            lineNumber: 4,
+          ),
+        ],
+        components: [],
+      );
+
+      final freebusy = component.toFreeBusy();
+      expect(freebusy, isA<FreeBusyComponent>());
+      expect(freebusy.uid, 'test-freebusy');
+    });
+
+    test('toFreeBusy throws exception for non-freebusy component', () {
+      final component = CalendarDocumentComponent(
+        name: 'VEVENT',
+        properties: [],
+        components: [],
+      );
+
+      expect(() => component.toFreeBusy(), throwsException);
+    });
+
+    test('toTimeZone converts VTIMEZONE to TimeZoneComponent', () {
+      final component = CalendarDocumentComponent(
+        name: 'VTIMEZONE',
+        properties: [
+          CalendarProperty(name: 'TZID', value: 'America/New_York', lineNumber: 1),
+        ],
+        components: [],
+      );
+
+      final timezone = component.toTimeZone();
+      expect(timezone, isA<TimeZoneComponent>());
+      expect(timezone.tzid, 'America/New_York');
+    });
+
+    test('toTimeZone throws exception for non-timezone component', () {
+      final component = CalendarDocumentComponent(
+        name: 'VEVENT',
+        properties: [],
+        components: [],
+      );
+
+      expect(() => component.toTimeZone(), throwsException);
+    });
+
+    test('toAlarm converts VALARM to AlarmComponent', () {
+      final component = CalendarDocumentComponent(
+        name: 'VALARM',
+        properties: [
+          CalendarProperty(name: 'ACTION', value: 'DISPLAY', lineNumber: 1),
+          CalendarProperty(name: 'TRIGGER', value: '-PT15M', lineNumber: 2),
+        ],
+        components: [],
+      );
+
+      final alarm = component.toAlarm();
+      expect(alarm, isA<AlarmComponent>());
+      expect(alarm.actionName, 'DISPLAY');
+    });
+
+    test('toAlarm throws exception for non-alarm component', () {
+      final component = CalendarDocumentComponent(
+        name: 'VEVENT',
+        properties: [],
+        components: [],
+      );
+
+      expect(() => component.toAlarm(), throwsException);
     });
   });
 }
