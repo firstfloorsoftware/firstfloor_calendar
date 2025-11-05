@@ -409,12 +409,15 @@ void main() {
       expect(event.effectiveEnd, isNull);
     });
 
-    test('effectiveEnd returns null when dtstart is null but duration present', () {
-      // Create an event without DTSTART property
-      final event = EventComponent(properties: {}, components: []);
-      
-      expect(event.effectiveEnd, isNull);
-    });
+    test(
+      'effectiveEnd returns null when dtstart is null but duration present',
+      () {
+        // Create an event without DTSTART property
+        final event = EventComponent(properties: {}, components: []);
+
+        expect(event.effectiveEnd, isNull);
+      },
+    );
 
     test('effectiveEnd handles multi-day duration', () {
       final parser = CalendarParser();
