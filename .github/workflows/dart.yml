@@ -21,7 +21,7 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
       - name: Run tests
-        run: dart test --coverage
+        run: dart test --coverage=coverage
       - name: Upload coverage to codecov
         run: curl -s https://codecov.io/bash | bash
         shell: bash
