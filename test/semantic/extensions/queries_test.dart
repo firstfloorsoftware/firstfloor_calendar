@@ -1666,6 +1666,290 @@ END:VEVENT''');
           );
         });
       });
+
+      group('Recurring events with duration', () {
+        test('Daily recurring event with 2-hour duration', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-daily-duration
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DURATION:PT2H
+RRULE:FREQ=DAILY;COUNT=5
+SUMMARY:Daily 2hr Meeting
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 15, 11, 0, 0);
+          final end = CalDateTime.local(2025, 1, 17, 11, 0, 0);
+          final results = [event].inRange(start, end).toList();
+
+          // Jan 15 10:00-12:00 (overlaps, starts before range but ends after range start)
+          // Jan 16 10:00-12:00 (fully in range)
+          // Jan 17 10:00-12:00 (starts in range)
+          expect(results.length, 3);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 15, 10, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 16, 10, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 17, 10, 0, 0),
+          );
+        });
+
+        test('Weekly recurring event with multi-day duration', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-weekly-multiday
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T140000
+DURATION:P2DT4H
+RRULE:FREQ=WEEKLY;COUNT=4
+SUMMARY:Weekend Workshop
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          // Jan 5 14:00 + 2d4h = Jan 7 18:00
+          // Jan 12 14:00 + 2d4h = Jan 14 18:00
+          // Jan 19 14:00 + 2d4h = Jan 21 18:00
+          // Jan 26 14:00 + 2d4h = Jan 28 18:00
+          expect(results.length, 4);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 5, 14, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 12, 14, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 19, 14, 0, 0),
+          );
+          expect(
+            results[3].occurrence,
+            CalDateTime.local(2025, 1, 26, 14, 0, 0),
+          );
+        });
+
+        test(
+          'Monthly recurring event with duration spanning month boundary',
+          () {
+            final parser = CalendarParser();
+            final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-monthly-duration
+DTSTAMP:20250101T000000Z
+DTSTART:20250128T200000
+DURATION:P3D
+RRULE:FREQ=MONTHLY;COUNT=3
+SUMMARY:End of Month Event
+END:VEVENT''');
+
+            final start = CalDateTime.local(2025, 1, 15, 0, 0, 0);
+            final end = CalDateTime.local(2025, 3, 31, 23, 59, 59);
+            final results = [event].inRange(start, end).toList();
+
+            // Jan 28 20:00 + 3d = Jan 31 20:00 (in range)
+            // Feb 28 20:00 + 3d = Mar 3 20:00 (in range)
+            // Mar 28 20:00 + 3d = Mar 31 20:00 (in range)
+            expect(results.length, 3);
+            expect(
+              results[0].occurrence,
+              CalDateTime.local(2025, 1, 28, 20, 0, 0),
+            );
+            expect(
+              results[1].occurrence,
+              CalDateTime.local(2025, 2, 28, 20, 0, 0),
+            );
+            expect(
+              results[2].occurrence,
+              CalDateTime.local(2025, 3, 28, 20, 0, 0),
+            );
+          },
+        );
+
+        test('Excludes recurring events when duration ends before range', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-exclude-duration
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T100000
+DURATION:PT1H
+RRULE:FREQ=DAILY;COUNT=10
+SUMMARY:Daily 1hr Event
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 20, 12, 0, 0);
+          final end = CalDateTime.local(2025, 1, 25, 23, 59, 59);
+          final results = [event].inRange(start, end).toList();
+
+          // Jan 10-19 all end at 11:00, range starts at Jan 20 12:00
+          // No events should match
+          expect(results.length, 0);
+        });
+
+        test('Recurring event with DTEND instead of DURATION', () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:test-dtend-recur
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T090000
+DTEND:20250115T173000
+RRULE:FREQ=DAILY;COUNT=5
+SUMMARY:Work Day
+END:VEVENT''');
+
+          final start = CalDateTime.local(2025, 1, 16, 16, 0, 0);
+          final end = CalDateTime.local(2025, 1, 18, 10, 0, 0);
+          final results = [event].inRange(start, end).toList();
+
+          // Jan 15 09:00-17:30 (ends before range)
+          // Jan 16 09:00-17:30 (overlaps with range start at 16:00)
+          // Jan 17 09:00-17:30 (fully overlaps)
+          // Jan 18 09:00-17:30 (starts before range end at 10:00)
+          expect(results.length, 3);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 16, 9, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 17, 9, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 18, 9, 0, 0),
+          );
+        });
+      });
+
+      group('Recurring todos with duration', () {
+        test('Daily recurring todo with 3-hour duration', () {
+          final parser = CalendarParser();
+          final todo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:test-daily-todo
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T140000
+DURATION:PT3H
+RRULE:FREQ=DAILY;COUNT=5
+SUMMARY:Daily Task
+END:VTODO''');
+
+          final start = CalDateTime.local(2025, 1, 16, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 17, 23, 59, 59);
+          final results = [todo].inRange(start, end).toList();
+
+          // Jan 15 14:00-17:00 (ends before range)
+          // Jan 16 14:00-17:00 (in range)
+          // Jan 17 14:00-17:00 (in range)
+          expect(results.length, 2);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 16, 14, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 17, 14, 0, 0),
+          );
+        });
+
+        test('Weekly recurring todo with multi-day duration', () {
+          final parser = CalendarParser();
+          final todo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:test-weekly-todo-multiday
+DTSTAMP:20250101T000000Z
+DTSTART:20250106T080000
+DURATION:P4D
+RRULE:FREQ=WEEKLY;COUNT=3
+SUMMARY:Weekly Project
+END:VTODO''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 25, 23, 59, 59);
+          final results = [todo].inRange(start, end).toList();
+
+          // Jan 6 08:00 + 4d = Jan 10 08:00 (overlaps range start)
+          // Jan 13 08:00 + 4d = Jan 17 08:00 (in range)
+          // Jan 20 08:00 + 4d = Jan 24 08:00 (in range)
+          expect(results.length, 3);
+          expect(results[0].occurrence, CalDateTime.local(2025, 1, 6, 8, 0, 0));
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 13, 8, 0, 0),
+          );
+          expect(
+            results[2].occurrence,
+            CalDateTime.local(2025, 1, 20, 8, 0, 0),
+          );
+        });
+
+        test('Recurring todo with DUE instead of DURATION', () {
+          final parser = CalendarParser();
+          final todo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:test-todo-due
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T090000
+DUE:20250115T180000
+RRULE:FREQ=DAILY;COUNT=4
+SUMMARY:Daily Work Task
+END:VTODO''');
+
+          final start = CalDateTime.local(2025, 1, 16, 12, 0, 0);
+          final end = CalDateTime.local(2025, 1, 17, 15, 0, 0);
+          final results = [todo].inRange(start, end).toList();
+
+          // Jan 15 09:00-18:00 (ends before range)
+          // Jan 16 09:00-18:00 (overlaps range)
+          // Jan 17 09:00-18:00 (starts before range end at 15:00)
+          expect(results.length, 2);
+          expect(
+            results[0].occurrence,
+            CalDateTime.local(2025, 1, 16, 9, 0, 0),
+          );
+          expect(
+            results[1].occurrence,
+            CalDateTime.local(2025, 1, 17, 9, 0, 0),
+          );
+        });
+
+        test('Monthly recurring todo with long duration', () {
+          final parser = CalendarParser();
+          final todo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:test-monthly-todo-long
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T000000
+DURATION:P15D
+RRULE:FREQ=MONTHLY;COUNT=3
+SUMMARY:Monthly Project Phase
+END:VTODO''');
+
+          final start = CalDateTime.local(2025, 1, 10, 0, 0, 0);
+          final end = CalDateTime.local(2025, 2, 10, 23, 59, 59);
+          final results = [todo].inRange(start, end).toList();
+
+          // Jan 1 00:00 + 15d = Jan 16 00:00 (overlaps range start)
+          // Feb 1 00:00 + 15d = Feb 16 00:00 (overlaps range)
+          expect(results.length, 2);
+          expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 0, 0, 0));
+          expect(results[1].occurrence, CalDateTime.local(2025, 2, 1, 0, 0, 0));
+        });
+      });
     });
   });
 }
