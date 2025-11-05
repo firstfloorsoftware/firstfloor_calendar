@@ -209,9 +209,7 @@ void main() {
           CalendarProperty(name: 'VERSION', value: '2.0'),
           CalendarProperty(name: 'PRODID', value: 'test'),
         ],
-        components: [
-          CalendarDocumentComponent(name: 'VEVENT', properties: []),
-        ],
+        components: [CalendarDocumentComponent(name: 'VEVENT', properties: [])],
       );
 
       expect(doc.name, 'VCALENDAR');
@@ -248,12 +246,8 @@ void main() {
     test('can be created with all parameters', () {
       final component = CalendarDocumentComponent(
         name: 'VEVENT',
-        properties: [
-          CalendarProperty(name: 'SUMMARY', value: 'Test Event'),
-        ],
-        components: [
-          CalendarDocumentComponent(name: 'VALARM'),
-        ],
+        properties: [CalendarProperty(name: 'SUMMARY', value: 'Test Event')],
+        components: [CalendarDocumentComponent(name: 'VALARM')],
         lineNumber: 10,
       );
 
@@ -282,9 +276,7 @@ void main() {
     test('propertiesNamed returns empty when no match', () {
       final component = CalendarDocumentComponent(
         name: 'VEVENT',
-        properties: [
-          CalendarProperty(name: 'SUMMARY', value: 'Test'),
-        ],
+        properties: [CalendarProperty(name: 'SUMMARY', value: 'Test')],
       );
 
       final results = component.propertiesNamed('NONEXISTENT').toList();
@@ -309,9 +301,7 @@ void main() {
     test('values returns empty when no match', () {
       final component = CalendarDocumentComponent(
         name: 'VEVENT',
-        properties: [
-          CalendarProperty(name: 'SUMMARY', value: 'Test'),
-        ],
+        properties: [CalendarProperty(name: 'SUMMARY', value: 'Test')],
       );
 
       final results = component.values('NONEXISTENT').toList();
@@ -360,9 +350,7 @@ void main() {
     test('componentsNamed returns empty when no match', () {
       final component = CalendarDocumentComponent(
         name: 'VEVENT',
-        components: [
-          CalendarDocumentComponent(name: 'VALARM'),
-        ],
+        components: [CalendarDocumentComponent(name: 'VALARM')],
       );
 
       final results = component.componentsNamed('NONEXISTENT').toList();
@@ -402,10 +390,7 @@ void main() {
 
   group('CalendarProperty data model', () {
     test('can be created with name and value', () {
-      const property = CalendarProperty(
-        name: 'SUMMARY',
-        value: 'Test Event',
-      );
+      const property = CalendarProperty(name: 'SUMMARY', value: 'Test Event');
 
       expect(property.name, 'SUMMARY');
       expect(property.value, 'Test Event');
@@ -441,10 +426,7 @@ void main() {
     });
 
     test('toString formats property without parameters', () {
-      const property = CalendarProperty(
-        name: 'SUMMARY',
-        value: 'Test Event',
-      );
+      const property = CalendarProperty(name: 'SUMMARY', value: 'Test Event');
 
       expect(property.toString(), 'SUMMARY:Test Event');
     });
