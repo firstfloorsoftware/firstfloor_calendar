@@ -475,4 +475,54 @@ void main() {
       expect(property.toString(), 'CATEGORIES;LANGUAGE=en,fr:WORK');
     });
   });
+
+  group('DocumentStreamParser stream control', () {
+    test('parseProperties handles pause and resume', () async {
+      final parser = DocumentStreamParser();
+      final content = '''VERSION:2.0
+PRODID:test
+CALSCALE:GREGORIAN''';
+      final stream = Stream.value(content.codeUnits);
+      final properties = parser.parseProperties(stream);
+
+      final subscription = properties.listen((_) {});
+      subscription.pause();
+      subscription.resume();
+      await subscription.cancel();
+
+      // Test passed if no errors thrown
+    });
+
+    test('parseComponents handles pause and resume', () async {
+      final parser = DocumentStreamParser();
+      final content = '''BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:test
+END:VCALENDAR''';
+      final stream = Stream.value(content.codeUnits);
+      final components = parser.parseComponents(stream);
+
+      final subscription = components.listen((_) {});
+      subscription.pause();
+      subscription.resume();
+      await subscription.cancel();
+
+      // Test passed if no errors thrown
+    });
+
+    test('parseComponents handles error in finalize', () async {
+      final parser = DocumentStreamParser();
+      // Missing END:VCALENDAR - should cause finalize error
+      final content = '''BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:test''';
+      final stream = Stream.value(content.codeUnits);
+      final components = parser.parseComponents(stream);
+
+      expect(
+        components.toList(),
+        throwsA(isA<ParseException>()),
+      );
+    });
+  });
 }
