@@ -58,10 +58,12 @@ class RecurrenceIterator {
     if (rdates != null) {
       for (final rdate in rdates!) {
         if (rdate.isPeriod) {
-          sortedRDates.add(rdate.period!.start);
-        } else {
-          sortedRDates.add(rdate.dateTime!);
+          throw UnsupportedError(
+            'RDATE with PERIOD values is not yet supported. '
+            'Only RDATE with DATE-TIME values are currently supported.',
+          );
         }
+        sortedRDates.add(rdate.dateTime!);
       }
       sortedRDates.sort();
     }
