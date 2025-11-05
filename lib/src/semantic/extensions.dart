@@ -66,6 +66,16 @@ extension EventComponentExtensions on EventComponent {
 
   /// Returns true if this event is an all-day event
   bool get isAllDay => dtstart?.isDate ?? false;
+
+  /// Returns the effective end time (dtend or dtstart + duration)
+  CalDateTime? get effectiveEnd {
+    if (dtend != null) return dtend;
+    if (duration != null && dtstart != null) {
+      return dtstart!.addDuration(duration!);
+    }
+    return null;
+  }
+
   /// Generates all occurrences of the event based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
   Iterable<CalDateTime> occurrences() {

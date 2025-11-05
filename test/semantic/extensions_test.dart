@@ -353,6 +353,97 @@ void main() {
       expect(event.isAllDay, isFalse);
     });
 
+    test('effectiveEnd returns dtend when present', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T110000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, CalDateTime.local(2025, 1, 15, 11, 0, 0));
+    });
+
+    test('effectiveEnd calculates from dtstart + duration when no dtend', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:PT2H30M\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, CalDateTime.local(2025, 1, 15, 12, 30, 0));
+    });
+
+    test('effectiveEnd prefers dtend over duration when both present', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T120000\r\n'
+        'DURATION:PT1H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, CalDateTime.local(2025, 1, 15, 12, 0, 0));
+    });
+
+    test('effectiveEnd returns null when no dtend or duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, isNull);
+    });
+
+    test('effectiveEnd returns null when dtstart is null but duration present', () {
+      // Create an event without DTSTART property
+      final event = EventComponent(properties: {}, components: []);
+      
+      expect(event.effectiveEnd, isNull);
+    });
+
+    test('effectiveEnd handles multi-day duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2DT5H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, CalDateTime.local(2025, 1, 17, 15, 0, 0));
+    });
+
+    test('effectiveEnd handles negative duration', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-end-7\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:-PT1H\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.effectiveEnd, CalDateTime.local(2025, 1, 15, 9, 0, 0));
+    });
+
     test('occurrences generates correct occurrences', () {
       final parser = CalendarParser();
       final event = parser.parseComponentFromString<EventComponent>(
