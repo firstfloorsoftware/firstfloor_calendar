@@ -34,46 +34,86 @@ class RecurrenceIterator {
          absoluteMaxIterations,
        );
 
-  /// Generates all occurrences of the event, applying exclusions and
-  /// ensuring no duplicates.
+  /// Generates all date time occurrences, applying exclusions and ensuring no duplicates.
+  ///
+  /// This method applies EXDATE exclusions and deduplicates occurrences
+  /// from the merged RRULE and RDATE stream.
   Iterable<CalDateTime> occurrences() sync* {
-    final exclude = <CalDateTime>{};
-    exclude.addAll(exdates ?? []);
+    // Only store EXDATEs (finite set) for exclusion checking
+    final exdateSet = <CalDateTime>{};
+    exdateSet.addAll(exdates ?? []);
+
+    // Track last yielded occurrence for duplicate detection (O(1) memory).
+    // This sliding window approach works because:
+    // 1. The merged stream from _occurrences() is sorted chronologically
+    // 2. Duplicates can only occur consecutively (same timestamp from both sources)
+    // 3. We only need to compare with the immediately previous occurrence
+    // This prevents memory leaks from storing all occurrences for infinite RRULEs.
+    CalDateTime? lastYielded;
 
     for (var o in _occurrences()) {
-      // apply exclusions
-      if (exclude.contains(o)) continue;
+      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
+      if (exdateSet.contains(o)) continue;
+      if (lastYielded == o) continue;
 
-      // ensure we don't yield duplicates
-      exclude.add(o);
-
+      lastYielded = o;
       yield o;
     }
   }
 
+  /// Generates occurrences by merging RRULE-based occurrences with RDATEs
+  /// in chronological order.
+  ///
+  /// This maintains lazy evaluation for potentially infinite recurrence rules
+  /// while ensuring proper ordering.
   Iterable<CalDateTime> _occurrences() sync* {
-    // include RRULE
+    // Pre-sort RDATEs (finite list) for chronological merging
+    final sortedRDates = <CalDateTime>[];
+    if (rdates != null) {
+      for (final rdate in rdates!) {
+        if (rdate.isPeriod) {
+          throw UnsupportedError(
+            'RDATE with PERIOD values is not yet supported. '
+            'Only RDATE with DATE-TIME values are currently supported.',
+          );
+        }
+        sortedRDates.add(rdate.dateTime!);
+      }
+      sortedRDates.sort();
+    }
+
+    var rdateIndex = 0;
+
+    // Merge RRULE occurrences and RDATEs in chronological order
+    for (var o in _generate()) {
+      // Yield all RDATEs that come before this RRULE occurrence
+      while (rdateIndex < sortedRDates.length &&
+          sortedRDates[rdateIndex].isBefore(o)) {
+        yield sortedRDates[rdateIndex++];
+      }
+
+      // Now yield the RRULE occurrence
+      yield o;
+    }
+
+    // Yield any remaining RDATEs after all RRULE occurrences
+    while (rdateIndex < sortedRDates.length) {
+      yield sortedRDates[rdateIndex++];
+    }
+  }
+
+  /// Generates RRULE-based occurrences or DTSTART if no RRULE.
+  Iterable<CalDateTime> _generate() sync* {
+    // Generate RRULE-based occurrences
     if (rrule != null) {
-      yield* _generate(rrule!);
+      yield* _generateFromRule(rrule!);
     } else {
       // if no RRULE, just yield DTSTART once
       yield dtstart;
     }
-
-    // include RDATEs
-    if (rdates != null) {
-      for (final rdate in rdates!) {
-        if (rdate.isPeriod) {
-          // TODO: support RDATE periods
-          throw UnsupportedError('RDATE periods are not supported yet');
-        } else {
-          yield rdate.dateTime!;
-        }
-      }
-    }
   }
 
-  Iterable<CalDateTime> _generate(RecurrenceRule rrule) sync* {
+  Iterable<CalDateTime> _generateFromRule(RecurrenceRule rrule) sync* {
     final count = rrule.count ?? -1;
     final until = rrule.until != null ? _normalizeUntil(rrule.until!) : null;
     final filters = _getFilters(dtstart, rrule);
@@ -205,5 +245,83 @@ class RecurrenceIterator {
 
       if (rrule.bySetPos != null) BySetPosFilter(rrule),
     ];
+  }
+}
+
+/// Extension providing query operations on [RecurrenceIterator].
+extension RecurrenceIteratorQuery on RecurrenceIterator {
+  /// Generates occurrences within the specified date range.
+  ///
+  /// [start] and [end] define the inclusive date range.
+  ///
+  /// When [duration] is provided, the method checks for overlap:
+  /// an occurrence is included if it starts at or before [end] AND
+  /// ends (occurrence + duration) at or after [start]. This correctly
+  /// handles multi-day events that may start before the range but
+  /// extend into it.
+  ///
+  /// When [duration] is null, only the occurrence start time is checked.
+  ///
+  /// Example without duration:
+  /// ```dart
+  /// final iterator = RecurrenceIterator(
+  ///   dtstart: CalDateTime(2025, 1, 1, 10, 0, 0),
+  ///   rrule: RecurrenceRule(freq: Frequency.daily),
+  /// );
+  ///
+  /// final start = CalDateTime(2025, 1, 10, 0, 0, 0);
+  /// final end = CalDateTime(2025, 1, 20, 23, 59, 59);
+  ///
+  /// for (final occurrence in iterator.occurrencesInRange(start, end)) {
+  ///   print(occurrence); // Only occurrences from Jan 10-20
+  /// }
+  /// ```
+  ///
+  /// Example with duration (multi-day event):
+  /// ```dart
+  /// final iterator = RecurrenceIterator(
+  ///   dtstart: CalDateTime(2025, 1, 1, 10, 0, 0),
+  ///   rrule: RecurrenceRule(freq: Frequency.weekly),
+  /// );
+  ///
+  /// final duration = CalDuration(days: 3); // 3-day event
+  /// final start = CalDateTime(2025, 1, 10, 0, 0, 0);
+  /// final end = CalDateTime(2025, 1, 20, 23, 59, 59);
+  ///
+  /// for (final occurrence in iterator.occurrencesInRange(start, end, duration: duration)) {
+  ///   print(occurrence); // Includes events that overlap the range
+  /// }
+  /// ```
+  Iterable<CalDateTime> occurrencesInRange(
+    CalDateTime start,
+    CalDateTime end, {
+    CalDuration? duration,
+  }) sync* {
+    if (start.isAfter(end)) {
+      throw ArgumentError('start must be before or equal to end');
+    }
+
+    for (final o in occurrences()) {
+      if (duration != null) {
+        // With duration: check for overlap
+        // Skip if occurrence ends before range starts
+        final occurrenceEnd = o.addDuration(duration);
+        if (occurrenceEnd.isBefore(start)) continue;
+
+        // Stop when occurrence starts after range ends (crucial for infinite recurrences)
+        if (o.isAfter(end)) break;
+
+        yield o;
+      } else {
+        // Single-point occurrence logic
+        // Skip occurrences before the range
+        if (o.isBefore(start)) continue;
+
+        // Stop when past the range (crucial for infinite recurrences)
+        if (o.isAfter(end)) break;
+
+        yield o;
+      }
+    }
   }
 }

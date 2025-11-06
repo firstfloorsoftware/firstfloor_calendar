@@ -1,50 +1,5 @@
-import '../document/document.dart';
-import 'semantic.dart';
-
-/// Extensions for [CalDateTime] to enhance functionality.
-extension CalDateTimeExtensions on CalDateTime {
-  /// Determines if this date is after the [other] date.
-  bool isAfter(CalDateTime other) {
-    return native.isAfter(other.native);
-  }
-
-  /// Determines if this date is before the [other] date.
-  bool isBefore(CalDateTime other) {
-    return native.isBefore(other.native);
-  }
-
-  /// The day of the year (1-365 or 1-366 in leap years).
-  int get dayOfYear {
-    final startOfYear = copyWith(
-      month: 1,
-      day: 1,
-      hour: 0,
-      minute: 0,
-      second: 0,
-    );
-    return native.difference(startOfYear.native).inDays + 1;
-  }
-
-  /// The weekday of this date.
-  Weekday get weekday {
-    return Weekday.values[native.weekday % 7];
-  }
-}
-
-/// Extensions for [RecurrenceRule] to enhance functionality.
-extension RecurrenceRuleExtensions on RecurrenceRule {
-  /// Determines if the recurrence rule is infinite (no end).
-  bool get isInfinite => count == null && until == null;
-
-  /// Determines if the recurrence rule is finite (has an end).
-  bool get isFinite => !isInfinite;
-
-  /// Determines if the recurrence rule has a COUNT limit.
-  bool get hasCount => count != null;
-
-  /// Determines if the recurrence rule has an UNTIL limit.
-  bool get hasUntil => until != null;
-}
+import '../../document/document.dart';
+import '../semantic.dart';
 
 /// Extensions for [EventComponent] to enhance functionality.
 extension EventComponentExtensions on EventComponent {
@@ -52,12 +7,50 @@ extension EventComponentExtensions on EventComponent {
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
   bool get isRecurring => rrule != null || rdates.isNotEmpty;
 
+  /// Returns true if this event is an all-day event
+  bool get isAllDay => dtstart?.isDate ?? false;
+
+  /// Returns the effective end time (dtend or dtstart + duration)
+  CalDateTime? get effectiveEnd {
+    if (dtend != null) return dtend;
+    if (duration != null && dtstart != null) {
+      return dtstart!.addDuration(duration!);
+    }
+    return null;
+  }
+
+  /// Returns the effective duration of the event.
+  ///
+  /// If [duration] is specified, returns it directly.
+  /// Otherwise, calculates duration from [effectiveEnd] - [dtstart].
+  /// Returns null if the event has no duration or end time.
+  CalDuration? get effectiveDuration {
+    if (duration != null) return duration;
+
+    final end = effectiveEnd;
+    if (end != null && dtstart != null && end != dtstart) {
+      final diff = end.native.difference(dtstart!.native);
+      final isNegative = diff.isNegative;
+      final absDiff = diff.abs();
+
+      return CalDuration(
+        sign: isNegative ? Sign.negative : Sign.positive,
+        days: absDiff.inDays,
+        hours: absDiff.inHours % 24,
+        minutes: absDiff.inMinutes % 60,
+        seconds: absDiff.inSeconds % 60,
+      );
+    }
+
+    return null;
+  }
+
   /// Generates all occurrences of the event based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the event has no start date.
   Iterable<CalDateTime> occurrences() {
-    if (dtstart == null) {
-      throw StateError('No DTSTART provided for recurrence generation');
-    }
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
 
     final iterator = RecurrenceIterator(
       dtstart: dtstart!,
@@ -75,11 +68,40 @@ extension TodoComponentExtensions on TodoComponent {
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
   bool get isRecurring => rrule != null || rdates.isNotEmpty;
 
+  /// Returns the effective duration of the todo.
+  ///
+  /// If [duration] is specified, returns it directly.
+  /// Otherwise, calculates duration from [due] - [dtstart].
+  /// Returns null if the todo has no duration or due date.
+  CalDuration? get effectiveDuration {
+    if (duration != null) return duration;
+
+    if (due != null && dtstart != null && due != dtstart) {
+      final diff = due!.native.difference(dtstart!.native);
+      final isNegative = diff.isNegative;
+      final absDiff = diff.abs();
+
+      return CalDuration(
+        sign: isNegative ? Sign.negative : Sign.positive,
+        days: absDiff.inDays,
+        hours: absDiff.inHours % 24,
+        minutes: absDiff.inMinutes % 60,
+        seconds: absDiff.inSeconds % 60,
+      );
+    }
+
+    return null;
+  }
+
   /// Generates all occurrences of the todo based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the todo has no start date.
   Iterable<CalDateTime> occurrences() {
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
+
     final iterator = RecurrenceIterator(
-      dtstart: dtstart,
+      dtstart: dtstart!,
       rrule: rrule,
       exdates: exdates,
       rdates: rdates,
@@ -96,9 +118,13 @@ extension JournalComponentExtensions on JournalComponent {
 
   /// Generates all occurrences of the journal based on its recurrence
   /// rules, exclusions (EXDATE), and additional dates (RDATE).
+  ///
+  /// Returns an empty iterable if the journal has no start date.
   Iterable<CalDateTime> occurrences() {
+    if (dtstart == null) return const Iterable<CalDateTime>.empty();
+
     final iterator = RecurrenceIterator(
-      dtstart: dtstart,
+      dtstart: dtstart!,
       rrule: rrule,
       exdates: exdates,
       rdates: rdates,

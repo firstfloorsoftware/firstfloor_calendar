@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.2] Nov 5, 2025
+## [1.0.2] - 2025-11-05
 
 ### Fixed
 - Fixed `resources` property type from `List<CalendarUserAddress>` to `List<String>` and use `valuesUnion()` for RFC 5545 compliance
@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Improved
 - Significantly increased test coverage
 
-## [1.0.1] Oct 26, 2025
+## [1.0.1] - 2025-10-26
 
 ### Fixed
 - Updated README examples to use correct API methods (`parseComponents` instead of deprecated `streamComponents`)
@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Improved
 - Enhanced documentation comments across public APIs for better clarity and consistency
 
-## [1.0.0] Oct 15, 2025
+## [1.0.0] - 2025-10-15
 
 ### Added
 - RFC 5545 compliant iCalendar parser
