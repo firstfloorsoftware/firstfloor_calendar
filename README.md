@@ -6,12 +6,31 @@
 
 A Dart library for parsing and working with iCalendar (.ics) files. Built with RFC 5545 compliance in mind, firstfloor_calendar provides a two-layer architecture that offers both low-level document access for custom processing and a high-level semantic API for type-safe calendar operations. Whether you're building a calendar app, processing meeting invites, or managing recurring events, this library gives you the tools to work with iCalendar data efficiently and correctly.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Basic Parsing](#basic-parsing)
+  - [Working with Events](#working-with-events)
+  - [Working with Timezones](#working-with-timezones)
+  - [Recurring Events](#recurring-events)
+  - [Filtering Events by Date Range](#filtering-events-by-date-range)
+  - [Streaming Large Files](#streaming-large-files)
+  - [Conditional Parsing with Stream Parser](#conditional-parsing-with-stream-parser)
+  - [Custom Property Parsers](#custom-property-parsers)
+- [Architecture](#architecture)
+  - [Document Layer](#document-layer)
+  - [Semantic Layer](#semantic-layer)
+  - [Layer Interaction](#layer-interaction)
+- [License](#license)
+
 ## Features
 
 - Parse iCalendar files into strongly typed models
 - Support for events, todos, journals, and timezones
 - Full RRULE recurrence expansion
-- Stream large files without loading into memory
+- Memory-efficient streaming for large files
 - Extensible with custom property parsers
 
 ## Installation
@@ -124,7 +143,7 @@ for (final occurrence in event.occurrences().take(10)) {
 
 ### Filtering Events by Date Range
 
-Use the `inRange` extension to filter events that occur within a specific date range. This works correctly with multi-day events, all-day events, and recurring events.
+Use the `inRange` extension to filter events that occur within a specific date range. This works correctly with multi-day events, all-day events, and recurring events. Results are always returned in chronological order, regardless of the order in the source file.
 
 ```dart
 final start = CalDateTime.date(2024, 3, 1);
@@ -139,6 +158,50 @@ for (final result in occurrencesInMarch) {
 
 // Works with todos and journals too
 final todoOccurrences = calendar.todos.inRange(start, end);
+```
+
+**Example: Chronological ordering across multiple events**
+
+```dart
+final ics = '''
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example//EN
+BEGIN:VEVENT
+UID:event3@example.com
+DTSTAMP:20240301T000000Z
+DTSTART:20240315T140000
+SUMMARY:Afternoon Meeting
+END:VEVENT
+BEGIN:VEVENT
+UID:event1@example.com
+DTSTAMP:20240301T000000Z
+DTSTART:20240310T090000
+SUMMARY:Early Meeting
+END:VEVENT
+BEGIN:VEVENT
+UID:event2@example.com
+DTSTAMP:20240301T000000Z
+DTSTART:20240312T100000
+SUMMARY:Mid-Month Standup
+END:VEVENT
+END:VCALENDAR''';
+
+final parser = CalendarParser();
+final calendar = parser.parseFromString(ics);
+
+// Events are automatically ordered chronologically
+final start = CalDateTime.date(2024, 3, 1);
+final end = CalDateTime.date(2024, 3, 31);
+
+for (final result in calendar.events.inRange(start, end)) {
+  print('${result.occurrence}: ${result.event.summary}');
+}
+
+// Output (chronologically sorted despite unordered source):
+// 2024-03-10 09:00:00: Early Meeting
+// 2024-03-12 10:00:00: Mid-Month Standup
+// 2024-03-15 14:00:00: Afternoon Meeting
 ```
 
 ### Streaming Large Files
@@ -162,7 +225,7 @@ await for (final component in streamParser.parseComponents(file.openRead())) {
 }
 ```
 
-### Advanced: Conditional Parsing with Stream Parser
+### Conditional Parsing with Stream Parser
 
 Process large files and selectively convert components to typed models based on specific criteria.
 
