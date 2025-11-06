@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/github/firstfloorsoftware/firstfloor_calendar/graph/badge.svg?token=W97YVE1EI6)](https://codecov.io/github/firstfloorsoftware/firstfloor_calendar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Dart library for parsing iCalendar (.ics) files with RFC 5545 support.
+A Dart library for parsing and working with iCalendar (.ics) files. Built with RFC 5545 compliance in mind, firstfloor_calendar provides a two-layer architecture that offers both low-level document access for custom processing and a high-level semantic API for type-safe calendar operations. Whether you're building a calendar app, processing meeting invites, or managing recurring events, this library gives you the tools to work with iCalendar data efficiently and correctly.
 
 ## Features
 
@@ -30,7 +30,7 @@ Parse iCalendar text into a strongly typed `Calendar` object. The parser handles
 ```dart
 import 'package:firstfloor_calendar/firstfloor_calendar.dart';
 
-final icsContent = '''
+final ics = '''
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Example//EN
@@ -44,7 +44,7 @@ END:VEVENT
 END:VCALENDAR''';
 
 final parser = CalendarParser();
-final calendar = parser.parseFromString(icsContent);
+final calendar = parser.parseFromString(ics);
 
 for (final event in calendar.events) {
   print('${event.summary}: ${event.dtstart}');
@@ -73,6 +73,42 @@ for (final attendee in event.attendees) {
 }
 ```
 
+### Working with Timezones
+
+Handle timezone-aware dates using the `timezone` package. Initialize timezones before parsing calendars with timezone identifiers.
+
+```dart
+import 'package:timezone/data/latest.dart' as tz;
+
+// Initialize timezone database (call once at app startup)
+tz.initializeTimeZones();
+
+final ics = '''
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example//EN
+BEGIN:VEVENT
+UID:tz-event@example.com
+DTSTAMP:20240315T120000Z
+DTSTART;TZID=America/New_York:20240315T090000
+DTEND;TZID=America/New_York:20240315T100000
+SUMMARY:Morning Meeting
+END:VEVENT
+END:VCALENDAR''';
+
+final parser = CalendarParser();
+final calendar = parser.parseFromString(ics);
+final event = calendar.events.first;
+
+// Access timezone-aware datetime
+print('Start: ${event.dtstart}');
+print('Timezone: ${event.dtstart?.dateTime?.timeZone.name}');
+
+// Convert to different timezone
+final berlinTime = event.dtstart?.dateTime?.toTimeZone(tz.getLocation('Europe/Berlin'));
+print('Berlin time: $berlinTime');
+```
+
 ### Recurring Events
 
 Generate occurrences from recurrence rules (RRULE). The `occurrences()` method returns a lazy stream that handles both recurring and non-recurring events gracefully.
@@ -84,6 +120,25 @@ final event = calendar.events.first;
 for (final occurrence in event.occurrences().take(10)) {
   print('Occurrence: $occurrence');
 }
+```
+
+### Filtering Events by Date Range
+
+Use the `inRange` extension to filter events that occur within a specific date range. This works correctly with multi-day events, all-day events, and recurring events.
+
+```dart
+final start = CalDateTime.date(2024, 3, 1);
+final end = CalDateTime.date(2024, 3, 31);
+
+// Get all event occurrences in March 2024
+final occurrencesInMarch = calendar.events.inRange(start, end);
+
+for (final result in occurrencesInMarch) {
+  print('${result.event.summary}: ${result.occurrence}');
+}
+
+// Works with todos and journals too
+final todoOccurrences = calendar.todos.inRange(start, end);
 ```
 
 ### Streaming Large Files
@@ -104,6 +159,39 @@ await for (final component in streamParser.parseComponents(file.openRead())) {
         ?.value;
     print('Event: ${summary ?? "Untitled"}');
   }
+}
+```
+
+### Advanced: Conditional Parsing with Stream Parser
+
+Process large files and selectively convert components to typed models based on specific criteria.
+
+```dart
+import 'dart:io';
+
+final file = File('large-calendar.ics');
+final streamParser = DocumentStreamParser();
+final events = <EventComponent>[];
+
+await for (final component in streamParser.parseComponents(file.openRead())) {
+  if (component.name == 'VEVENT') {
+    // Check for a specific condition before parsing
+    final status = component.properties
+        .where((p) => p.name == 'STATUS')
+        .firstOrNull
+        ?.value;
+    
+    // Only convert confirmed events to typed models
+    if (status == 'CONFIRMED') {
+      final event = component.toEvent();
+      events.add(event);
+    }
+  }
+}
+
+print('Found ${events.length} confirmed events');
+for (final event in events) {
+  print('${event.summary}: ${event.dtstart}');
 }
 ```
 
@@ -131,18 +219,65 @@ parser.registerPropertyRule(
   ),
 );
 
-final calendar = parser.parseFromString(icsContent);
+final calendar = parser.parseFromString(ics);
 final priority = calendar.events.first.value<int>('X-CUSTOM-PRIORITY');
 ```
 
 ## Architecture
 
-The library uses a two-layer architecture:
+The library uses a two-layer architecture that separates parsing concerns and provides flexibility for different use cases:
 
-- **Document Layer** (`DocumentParser`): Parses raw .ics text into an untyped tree structure
-- **Semantic Layer** (`CalendarParser`): Converts the document tree into strongly typed models with validation
+### Document Layer
 
-Use `DocumentParser` for low-level access, and `CalendarParser` for most applications.
+The **Document Layer** (`DocumentParser` and `DocumentStreamParser`) handles the low-level parsing of iCalendar text. It:
+
+- Parses .ics files into an untyped tree structure (`CalendarDocument`)
+- Handles line unfolding, property parsing, and component nesting
+- Provides streaming capabilities for large files via `DocumentStreamParser`
+- Performs no semantic validation - just structural parsing
+- Returns raw components (`CalendarDocumentComponent`) and properties (`CalendarProperty`)
+
+Use the Document Layer when you need:
+- Low-level access to raw iCalendar data
+- Custom validation or transformation logic
+- Memory-efficient streaming of large files
+- Access to non-standard or vendor-specific properties
+
+### Semantic Layer
+
+The **Semantic Layer** (`CalendarParser`) builds on top of the Document Layer to provide type-safe models. It:
+
+- Converts document components into strongly typed models (`EventComponent`, `TodoComponent`, etc.)
+- Validates property values according to RFC 5545
+- Provides type-safe access to properties with proper nullability
+- Supports custom property parsers via `registerPropertyRule`
+- Handles recurrence rule expansion and date calculations
+
+Use the Semantic Layer when you need:
+- Type-safe business logic and calendar operations
+- RFC 5545 validation and compliance checking
+- Convenient access to common properties
+- Recurrence rule processing and occurrence generation
+
+### Layer Interaction
+
+The layers work together seamlessly:
+
+```dart
+// Parse at document level
+final document = DocumentParser().parse(ics);
+
+// Optionally inspect/transform document
+// ... custom logic ...
+
+// Convert to semantic models
+final calendar = CalendarParser().parseDocument(document);
+
+// Or go directly to semantic layer
+final calendar = CalendarParser().parseFromString(ics);
+```
+
+You can also bridge from document to semantic selectively using extension methods like `toEvent()`, `toTodo()`, etc.
 
 ## License
 
