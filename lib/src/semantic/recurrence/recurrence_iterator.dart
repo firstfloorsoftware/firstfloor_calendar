@@ -307,12 +307,9 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
 
     for (final o in occurrences()) {
       if (duration != null) {
-        // Duration overlap logic:
-        // Include if occurrence starts at or before range end
-        // AND occurrence ends at or after range start
-        final occurrenceEnd = o.addDuration(duration);
-
+        // With duration: check for overlap
         // Skip if occurrence ends before range starts
+        final occurrenceEnd = o.addDuration(duration);
         if (occurrenceEnd.isBefore(start)) continue;
 
         // Stop when occurrence starts after range ends (crucial for infinite recurrences)
