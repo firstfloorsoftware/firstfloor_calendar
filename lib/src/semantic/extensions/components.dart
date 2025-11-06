@@ -1,6 +1,43 @@
 import '../../document/document.dart';
 import '../semantic.dart';
 
+/// Helper function to determine if a component spans multiple days.
+///
+/// [duration] is the effective duration of the component.
+/// [startDate] is the start date/time of the component.
+/// [endDate] is the end date/time of the component.
+///
+/// Returns true if the component appears on more than one calendar day.
+bool _isMultiDay({
+  required CalDuration? duration,
+  required CalDateTime? startDate,
+  required CalDateTime? endDate,
+}) {
+  if (duration == null) return false;
+
+  // For negative durations, consider it not multi-day
+  if (duration.sign == Sign.negative) return false;
+
+  // For all-day items (DATE values), check if duration is MORE than 1 day
+  final isAllDay = startDate?.isDate ?? false;
+  if (isAllDay) {
+    return duration.days > 1;
+  }
+
+  // For timed items, check if duration is at least 1 day
+  // or if it crosses midnight
+  if (duration.days > 0) return true;
+
+  // For items with only hours/minutes/seconds, check if it crosses midnight
+  if (endDate != null && startDate != null) {
+    return startDate.day != endDate.day ||
+        startDate.month != endDate.month ||
+        startDate.year != endDate.year;
+  }
+
+  return false;
+}
+
 /// Extensions for [EventComponent] to enhance functionality.
 extension EventComponentExtensions on EventComponent {
   /// Determines if the event is recurring based on the presence of
@@ -9,6 +46,18 @@ extension EventComponentExtensions on EventComponent {
 
   /// Returns true if this event is an all-day event
   bool get isAllDay => dtstart?.isDate ?? false;
+
+  /// Returns true if this event spans multiple days.
+  ///
+  /// An event is considered multi-day if it appears on more than one calendar day.
+  /// For all-day events, this means the duration is more than 1 day.
+  /// For timed events, this means it crosses midnight to a different day.
+  /// Returns false if the event has no end time or duration.
+  bool get isMultiDay => _isMultiDay(
+    duration: effectiveDuration,
+    startDate: dtstart,
+    endDate: effectiveEnd,
+  );
 
   /// Returns the effective end time (dtend or dtstart + duration)
   CalDateTime? get effectiveEnd {
@@ -67,6 +116,17 @@ extension TodoComponentExtensions on TodoComponent {
   /// Determines if the todo is recurring based on the presence of
   /// a recurrence rule (RRULE) or recurrence dates (RDATE).
   bool get isRecurring => rrule != null || rdates.isNotEmpty;
+
+  /// Returns true if this todo spans multiple days.
+  ///
+  /// A todo is considered multi-day if it appears on more than one calendar day.
+  /// This is determined by the duration from [dtstart] to [due].
+  /// Returns false if the todo has no due date or duration.
+  bool get isMultiDay => _isMultiDay(
+    duration: effectiveDuration,
+    startDate: dtstart,
+    endDate: due,
+  );
 
   /// Returns the effective duration of the todo.
   ///

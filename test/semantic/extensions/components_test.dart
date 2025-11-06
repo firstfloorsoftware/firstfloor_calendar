@@ -93,6 +93,107 @@ void main() {
       expect(event.isAllDay, isFalse);
     });
 
+    test('isMultiDay returns true for event with duration >= 1 day', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2D\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns true for event crossing midnight', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T230000\r\n'
+        'DTEND:20250116T010000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single-day event', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T110000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false when no duration or end time', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test(
+      'isMultiDay returns true for all-day event spanning multiple days',
+      () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>(
+          'BEGIN:VEVENT\r\n'
+          'UID:test-multiday-5\r\n'
+          'DTSTAMP:20250101T000000Z\r\n'
+          'DTSTART;VALUE=DATE:20250115\r\n'
+          'DTEND;VALUE=DATE:20250117\r\n'
+          'END:VEVENT',
+        );
+
+        expect(event.isMultiDay, isTrue);
+      },
+    );
+
+    test('isMultiDay returns false for single all-day event', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DTEND;VALUE=DATE:20250116\r\n'
+        'END:VEVENT',
+      );
+
+      // All-day event from Jan 15 to Jan 16 (exclusive) is a single day
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false for single all-day event without end', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-7\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'END:VEVENT',
+      );
+
+      // Single all-day event with no end date is not multi-day
+      expect(event.isMultiDay, isFalse);
+    });
+
     test('effectiveEnd returns dtend when present', () {
       final parser = CalendarParser();
       final event = parser.parseComponentFromString<EventComponent>(
@@ -511,6 +612,90 @@ void main() {
       expect(todo.effectiveDuration!.sign, Sign.negative);
       expect(todo.effectiveDuration!.hours, 1);
     });
+
+    test('isMultiDay returns true for todo with duration >= 1 day', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2D\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns true for todo crossing midnight', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T230000\r\n'
+        'DUE:20250116T010000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single-day todo', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250115T140000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false when no duration or due date', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns true for all-day todo spanning multiple days', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-5\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DUE;VALUE=DATE:20250118\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single all-day todo', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DUE;VALUE=DATE:20250116\r\n'
+        'END:VTODO',
+      );
+
+      // All-day todo from Jan 15 to Jan 16 (exclusive) is a single day
+      expect(todo.isMultiDay, isFalse);
+    });
   });
 
   group('JournalComponentExtensions', () {
@@ -853,7 +1038,7 @@ END:STANDARD''';
     });
 
     group('TimeZoneIterableQuery.inRange', () {
-      test('includes single timezone within range', () {
+      test('Includes single timezone within range', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -873,7 +1058,7 @@ END:STANDARD''',
         expect(results[0].timezone.tzoffsetTo.toString(), '+0000');
       });
 
-      test('excludes single timezone before range', () {
+      test('Excludes single timezone before range', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -891,7 +1076,7 @@ END:STANDARD''',
         expect(results.length, 0);
       });
 
-      test('excludes single timezone after range', () {
+      test('Excludes single timezone after range', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -909,7 +1094,7 @@ END:STANDARD''',
         expect(results.length, 0);
       });
 
-      test('includes timezone exactly at range start', () {
+      test('Includes timezone exactly at range start', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -928,7 +1113,7 @@ END:STANDARD''',
         expect(results[0].occurrence, start);
       });
 
-      test('includes timezone exactly at range end', () {
+      test('Includes timezone exactly at range end', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -950,7 +1135,7 @@ END:STANDARD''',
         );
       });
 
-      test('includes multiple single timezones in range', () {
+      test('Includes multiple single timezones in range', () {
         final parser = CalendarParser();
         final timezones = [
           parser.parseComponentFromString<TimeZoneSubComponent>('''
@@ -984,7 +1169,7 @@ END:STANDARD'''),
       });
 
       test(
-        'includes only occurrences within range for recurring timezone with COUNT',
+        'Includes only occurrences within range for recurring timezone with COUNT',
         () {
           final parser = CalendarParser();
           final timezone = parser
@@ -1018,7 +1203,7 @@ END:STANDARD''');
       );
 
       test(
-        'includes only occurrences within range for recurring timezone with UNTIL',
+        'Includes only occurrences within range for recurring timezone with UNTIL',
         () {
           final parser = CalendarParser();
           final timezone = parser
@@ -1047,7 +1232,7 @@ END:STANDARD''');
         },
       );
 
-      test('stops generating at range end for infinite recurring timezone', () {
+      test('Stops generating at range end for infinite recurring timezone', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1069,7 +1254,7 @@ END:STANDARD''',
         expect(results[4].occurrence, CalDateTime.local(2025, 1, 29, 2, 0, 0));
       });
 
-      test('handles recurring timezone starting before range', () {
+      test('Handles recurring timezone starting before range', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1092,7 +1277,7 @@ END:STANDARD''',
         expect(results[4].occurrence, CalDateTime.local(2025, 1, 31, 2, 0, 0));
       });
 
-      test('handles recurring timezone with RDATE additions', () {
+      test('Handles recurring timezone with RDATE additions', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1118,7 +1303,7 @@ END:STANDARD''',
         expect(results[3].occurrence, CalDateTime.local(2025, 1, 20, 2, 0, 0));
       });
 
-      test('returns empty list when no timezones in range', () {
+      test('Returns empty list when no timezones in range', () {
         final parser = CalendarParser();
         final timezones = [
           parser.parseComponentFromString<TimeZoneSubComponent>('''
@@ -1142,7 +1327,7 @@ END:STANDARD'''),
         expect(results.length, 0);
       });
 
-      test('returns empty list for empty timezone list', () {
+      test('Returns empty list for empty timezone list', () {
         final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
         final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
         final results = <TimeZoneSubComponent>[].inRange(start, end).toList();
@@ -1150,7 +1335,7 @@ END:STANDARD'''),
         expect(results.length, 0);
       });
 
-      test('throws ArgumentError when start is after end', () {
+      test('Throws ArgumentError when start is after end', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1170,7 +1355,7 @@ END:STANDARD''',
         );
       });
 
-      test('handles date-only range boundaries', () {
+      test('Handles date-only range boundaries', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1190,7 +1375,7 @@ END:STANDARD''',
         expect(results[0].occurrence, CalDateTime.local(2025, 1, 15, 0, 0, 0));
       });
 
-      test('handles yearly recurring timezone', () {
+      test('Handles yearly recurring timezone', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1213,7 +1398,7 @@ END:STANDARD''',
         expect(results[4].occurrence, CalDateTime.local(2029, 3, 15, 2, 0, 0));
       });
 
-      test('preserves timezone reference in results', () {
+      test('Preserves timezone reference in results', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1234,7 +1419,7 @@ END:STANDARD''',
         expect(results[0].timezone.tznames, contains('EST'));
       });
 
-      test('handles large date range efficiently', () {
+      test('Handles large date range efficiently', () {
         final parser = CalendarParser();
         final timezone = parser.parseComponentFromString<TimeZoneSubComponent>(
           '''
@@ -1253,7 +1438,7 @@ END:STANDARD''',
         expect(results[0].occurrence, CalDateTime.local(2025, 6, 15, 2, 0, 0));
       });
 
-      test('works with filtered timezone list', () {
+      test('Works with filtered timezone list', () {
         final parser = CalendarParser();
         final timezones = [
           parser.parseComponentFromString<TimeZoneSubComponent>('''
