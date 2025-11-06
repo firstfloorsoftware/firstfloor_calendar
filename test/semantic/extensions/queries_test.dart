@@ -1951,5 +1951,535 @@ END:VTODO''');
         });
       });
     });
+
+    group('Chronological Ordering', () {
+      test(
+        'Multiple events with different frequencies in chronological order',
+        () {
+          final parser = CalendarParser();
+
+          // Daily event starting Jan 5 at 9am
+          final dailyEvent = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:daily-event
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T090000
+DTEND:20250105T100000
+SUMMARY:Daily Standup
+RRULE:FREQ=DAILY
+END:VEVENT''');
+
+          // Hourly event starting Jan 10 at 8am
+          final hourlyEvent = parser.parseComponentFromString<EventComponent>(
+            '''
+BEGIN:VEVENT
+UID:hourly-event
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T080000
+DTEND:20250110T083000
+SUMMARY:Hourly Check
+RRULE:FREQ=HOURLY
+END:VEVENT''',
+          );
+
+          final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+          final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+          final results = [
+            dailyEvent,
+            hourlyEvent,
+          ].inRange(start, end).toList();
+
+          // First 10 should be in chronological order
+          expect(results[0].event.summary, 'Daily Standup');
+          expect(results[0].occurrence, CalDateTime.local(2025, 1, 5, 9, 0, 0));
+
+          expect(results[1].event.summary, 'Daily Standup');
+          expect(results[1].occurrence, CalDateTime.local(2025, 1, 6, 9, 0, 0));
+
+          expect(results[2].event.summary, 'Daily Standup');
+          expect(results[2].occurrence, CalDateTime.local(2025, 1, 7, 9, 0, 0));
+
+          expect(results[3].event.summary, 'Daily Standup');
+          expect(results[3].occurrence, CalDateTime.local(2025, 1, 8, 9, 0, 0));
+
+          expect(results[4].event.summary, 'Daily Standup');
+          expect(results[4].occurrence, CalDateTime.local(2025, 1, 9, 9, 0, 0));
+
+          // Then hourly event starts on Jan 10 at 8am (before daily at 9am)
+          expect(results[5].event.summary, 'Hourly Check');
+          expect(
+            results[5].occurrence,
+            CalDateTime.local(2025, 1, 10, 8, 0, 0),
+          );
+
+          // Both daily and hourly occur at 9am on Jan 10
+          expect(results[6].event.summary, 'Daily Standup');
+          expect(
+            results[6].occurrence,
+            CalDateTime.local(2025, 1, 10, 9, 0, 0),
+          );
+
+          expect(results[7].event.summary, 'Hourly Check');
+          expect(
+            results[7].occurrence,
+            CalDateTime.local(2025, 1, 10, 9, 0, 0),
+          );
+
+          expect(results[8].event.summary, 'Hourly Check');
+          expect(
+            results[8].occurrence,
+            CalDateTime.local(2025, 1, 10, 10, 0, 0),
+          );
+
+          expect(results[9].event.summary, 'Hourly Check');
+          expect(
+            results[9].occurrence,
+            CalDateTime.local(2025, 1, 10, 11, 0, 0),
+          );
+
+          // Verify total counts: 27 daily (Jan 5-31) + 520 hourly (Jan 10-31, 22 hours/day)
+          final dailyCount = results
+              .where((r) => r.event.summary == 'Daily Standup')
+              .length;
+          final hourlyCount = results
+              .where((r) => r.event.summary == 'Hourly Check')
+              .length;
+
+          expect(dailyCount, 27);
+
+          // Jan 10: 8am-11pm = 16 hours
+          // Jan 11-30: 20 days × 24 hours = 480
+          // Jan 31: 12am-11pm = 24
+          // Total = 16 + 480 + 24 = 520
+          expect(hourlyCount, 520);
+        },
+      );
+
+      test('Simultaneous occurrences maintain stable order', () {
+        final parser = CalendarParser();
+
+        // Three events all starting at exactly 10am on Jan 15
+        final event1 = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event-1
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DTEND:20250115T110000
+SUMMARY:Event One
+END:VEVENT''');
+
+        final event2 = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event-2
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DTEND:20250115T110000
+SUMMARY:Event Two
+END:VEVENT''');
+
+        final event3 = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event-3
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DTEND:20250115T110000
+SUMMARY:Event Three
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [event1, event2, event3].inRange(start, end).toList();
+
+        expect(results.length, 3);
+        // Should maintain insertion order when times are identical
+        expect(results[0].event.summary, 'Event One');
+        expect(results[1].event.summary, 'Event Two');
+        expect(results[2].event.summary, 'Event Three');
+      });
+
+      test('Mixed recurring and non-recurring events in order', () {
+        final parser = CalendarParser();
+
+        // Non-recurring event on Jan 10 at 2pm
+        final singleEvent = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:single-event
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T140000
+DTEND:20250110T150000
+SUMMARY:Single Meeting
+END:VEVENT''');
+
+        // Daily event starting Jan 8 at 9am
+        final dailyEvent = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:daily-event
+DTSTAMP:20250101T000000Z
+DTSTART:20250108T090000
+DTEND:20250108T100000
+SUMMARY:Daily Standup
+RRULE:FREQ=DAILY;COUNT=5
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [singleEvent, dailyEvent].inRange(start, end).toList();
+
+        expect(results.length, 6);
+
+        // Jan 8, 9 daily standups first
+        expect(results[0].event.summary, 'Daily Standup');
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 8, 9, 0, 0));
+
+        expect(results[1].event.summary, 'Daily Standup');
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 9, 9, 0, 0));
+
+        // Jan 10 daily at 9am, then single at 2pm
+        expect(results[2].event.summary, 'Daily Standup');
+        expect(results[2].occurrence, CalDateTime.local(2025, 1, 10, 9, 0, 0));
+
+        expect(results[3].event.summary, 'Single Meeting');
+        expect(results[3].occurrence, CalDateTime.local(2025, 1, 10, 14, 0, 0));
+
+        // Jan 11, 12 daily standups
+        expect(results[4].event.summary, 'Daily Standup');
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 11, 9, 0, 0));
+
+        expect(results[5].event.summary, 'Daily Standup');
+        expect(results[5].occurrence, CalDateTime.local(2025, 1, 12, 9, 0, 0));
+      });
+
+      test('Todos with different frequencies in chronological order', () {
+        final parser = CalendarParser();
+
+        // Weekly todo starting Jan 1
+        final weeklyTodo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:weekly-todo
+DTSTAMP:20250101T000000Z
+DTSTART:20250101T100000
+DURATION:PT2H
+SUMMARY:Weekly Review
+RRULE:FREQ=WEEKLY;COUNT=4
+END:VTODO''');
+
+        // Daily todo starting Jan 5
+        final dailyTodo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:daily-todo
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T090000
+DURATION:PT1H
+SUMMARY:Daily Task
+RRULE:FREQ=DAILY;COUNT=10
+END:VTODO''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [weeklyTodo, dailyTodo].inRange(start, end).toList();
+
+        expect(results.length, 14); // 4 weekly + 10 daily
+
+        // First should be weekly on Jan 1 at 10am
+        expect(results[0].todo.summary, 'Weekly Review');
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 1, 10, 0, 0));
+
+        // Then daily tasks start Jan 5 at 9am
+        expect(results[1].todo.summary, 'Daily Task');
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 5, 9, 0, 0));
+
+        // Jan 6, 7 dailies
+        expect(results[2].todo.summary, 'Daily Task');
+        expect(results[3].todo.summary, 'Daily Task');
+
+        // Jan 8 daily at 9am, then weekly at 10am
+        expect(results[4].todo.summary, 'Daily Task');
+        expect(results[4].occurrence, CalDateTime.local(2025, 1, 8, 9, 0, 0));
+
+        expect(results[5].todo.summary, 'Weekly Review');
+        expect(results[5].occurrence, CalDateTime.local(2025, 1, 8, 10, 0, 0));
+
+        // Verify chronological order
+        for (var i = 1; i < results.length; i++) {
+          expect(
+            results[i].occurrence.compareTo(results[i - 1].occurrence) >= 0,
+            isTrue,
+            reason:
+                'Occurrence at index $i should be >= occurrence at index ${i - 1}',
+          );
+        }
+      });
+
+      test('Journals with overlapping occurrences in order', () {
+        final parser = CalendarParser();
+
+        // Journal every 2 hours starting Jan 10 at midnight
+        final frequentJournal = parser
+            .parseComponentFromString<JournalComponent>('''
+BEGIN:VJOURNAL
+UID:frequent-journal
+DTSTAMP:20250101T000000Z
+DTSTART:20250110T000000
+SUMMARY:Frequent Log
+RRULE:FREQ=HOURLY;INTERVAL=2;COUNT=12
+END:VJOURNAL''');
+
+        // Journal daily at 3am starting Jan 9
+        final dailyJournal = parser.parseComponentFromString<JournalComponent>(
+          '''
+BEGIN:VJOURNAL
+UID:daily-journal
+DTSTAMP:20250101T000000Z
+DTSTART:20250109T030000
+SUMMARY:Daily Reflection
+RRULE:FREQ=DAILY;COUNT=5
+END:VJOURNAL''',
+        );
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [
+          frequentJournal,
+          dailyJournal,
+        ].inRange(start, end).toList();
+
+        expect(results.length, 17); // 12 frequent + 5 daily
+
+        // First should be daily on Jan 9 at 3am
+        expect(results[0].journal.summary, 'Daily Reflection');
+        expect(results[0].occurrence, CalDateTime.local(2025, 1, 9, 3, 0, 0));
+
+        // Then frequent starts Jan 10 at midnight
+        expect(results[1].journal.summary, 'Frequent Log');
+        expect(results[1].occurrence, CalDateTime.local(2025, 1, 10, 0, 0, 0));
+
+        // Daily at 3am Jan 10
+        expect(results[3].journal.summary, 'Daily Reflection');
+        expect(results[3].occurrence, CalDateTime.local(2025, 1, 10, 3, 0, 0));
+
+        // Verify all in chronological order
+        for (var i = 1; i < results.length; i++) {
+          expect(
+            results[i].occurrence.compareTo(results[i - 1].occurrence) >= 0,
+            isTrue,
+            reason:
+                'Journal at index $i should be >= journal at index ${i - 1}',
+          );
+        }
+      });
+
+      test('Timezones with multiple transitions in chronological order', () {
+        final parser = CalendarParser();
+
+        // Parse a complete timezone with both standard and daylight rules
+        final timezone = parser.parseComponentFromString<TimeZoneComponent>('''
+BEGIN:VTIMEZONE
+TZID:Test/Zone
+BEGIN:STANDARD
+DTSTART:20251102T020000
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:20250309T020000
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+END:VTIMEZONE''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 12, 31, 23, 59, 59);
+
+        // Combine both standard and daylight sub-components
+        final allRules = [...timezone.standard, ...timezone.daylight];
+
+        final results = allRules.inRange(start, end).toList();
+
+        expect(results.length, 2);
+
+        // Daylight starts in March (offset to -4 hours)
+        expect(results[0].timezone.tzoffsetTo.hours, 4);
+        expect(results[0].timezone.tzoffsetTo.sign, Sign.negative);
+        expect(results[0].occurrence, CalDateTime.local(2025, 3, 9, 2, 0, 0));
+
+        // Standard starts in November (offset to -5 hours)
+        expect(results[1].timezone.tzoffsetTo.hours, 5);
+        expect(results[1].timezone.tzoffsetTo.sign, Sign.negative);
+        expect(results[1].occurrence, CalDateTime.local(2025, 11, 2, 2, 0, 0));
+      });
+
+      test('Empty components list returns empty results', () {
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+
+        final events = <EventComponent>[].inRange(start, end).toList();
+        final todos = <TodoComponent>[].inRange(start, end).toList();
+        final journals = <JournalComponent>[].inRange(start, end).toList();
+        final timezones = <TimeZoneSubComponent>[].inRange(start, end).toList();
+
+        expect(events.length, 0);
+        expect(todos.length, 0);
+        expect(journals.length, 0);
+        expect(timezones.length, 0);
+      });
+
+      test('Components with null dtstart for todos are handled', () {
+        final parser = CalendarParser();
+
+        // Todo without DTSTART (use DUE instead)
+        final noDtstartTodo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:no-dtstart
+DTSTAMP:20250101T000000Z
+DUE:20250115T100000
+SUMMARY:No Start Time
+END:VTODO''');
+
+        // Valid todo with DTSTART
+        final validTodo = parser.parseComponentFromString<TodoComponent>('''
+BEGIN:VTODO
+UID:valid-todo
+DTSTAMP:20250101T000000Z
+DTSTART:20250115T100000
+DURATION:PT1H
+SUMMARY:Valid Todo
+END:VTODO''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [noDtstartTodo, validTodo].inRange(start, end).toList();
+
+        // Only valid todo with dtstart should be included
+        expect(results.length, 1);
+        expect(results[0].todo.summary, 'Valid Todo');
+      });
+
+      test('Large number of components maintains order efficiently', () {
+        final parser = CalendarParser();
+        final events = <EventComponent>[];
+
+        // Create 50 events with different start dates (days in Jan and Feb)
+        for (var i = 1; i <= 50; i++) {
+          final day = i <= 31 ? i : i - 31;
+          final month = i <= 31 ? 1 : 2;
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event-$i
+DTSTAMP:20250101T000000Z
+DTSTART:2025${month.toString().padLeft(2, '0')}${day.toString().padLeft(2, '0')}T100000
+DTEND:2025${month.toString().padLeft(2, '0')}${day.toString().padLeft(2, '0')}T110000
+SUMMARY:Event $i
+END:VEVENT''');
+          events.add(event);
+        }
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 3, 31, 23, 59, 59);
+        final results = events.inRange(start, end).toList();
+
+        expect(results.length, 50);
+
+        // Verify chronological order
+        for (var i = 1; i < results.length; i++) {
+          expect(
+            results[i].occurrence.compareTo(results[i - 1].occurrence) >= 0,
+            isTrue,
+            reason: 'Event $i should occur at or after event ${i - 1}',
+          );
+        }
+      });
+
+      test('Recurring events with exceptions maintain order', () {
+        final parser = CalendarParser();
+
+        // Daily event with some exceptions
+        final eventWithExceptions = parser
+            .parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event-with-exdates
+DTSTAMP:20250101T000000Z
+DTSTART:20250105T090000
+DTEND:20250105T100000
+SUMMARY:Daily Standup
+RRULE:FREQ=DAILY;COUNT=10
+EXDATE:20250107T090000,20250109T090000
+END:VEVENT''');
+
+        // Another daily event
+        final normalEvent = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:normal-event
+DTSTAMP:20250101T000000Z
+DTSTART:20250107T140000
+DTEND:20250107T150000
+SUMMARY:Afternoon Meeting
+RRULE:FREQ=DAILY;COUNT=3
+END:VEVENT''');
+
+        final start = CalDateTime.local(2025, 1, 1, 0, 0, 0);
+        final end = CalDateTime.local(2025, 1, 31, 23, 59, 59);
+        final results = [
+          eventWithExceptions,
+          normalEvent,
+        ].inRange(start, end).toList();
+
+        // Should have 8 standups (10 - 2 excluded) + 3 meetings = 11
+        expect(results.length, 11);
+
+        // Verify no excluded dates appear
+        final standupOccurrences = results
+            .where((r) => r.event.summary == 'Daily Standup')
+            .map((r) => r.occurrence)
+            .toList();
+
+        expect(
+          standupOccurrences.contains(CalDateTime.local(2025, 1, 7, 9, 0, 0)),
+          isFalse,
+        );
+        expect(
+          standupOccurrences.contains(CalDateTime.local(2025, 1, 9, 9, 0, 0)),
+          isFalse,
+        );
+
+        // Verify chronological order
+        for (var i = 1; i < results.length; i++) {
+          expect(
+            results[i].occurrence.compareTo(results[i - 1].occurrence) >= 0,
+            isTrue,
+          );
+        }
+      });
+
+      test(
+        'Single event with time component on boundary date is included when using date-only boundary',
+        () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event1@example.com
+DTSTAMP:20250101T000000Z
+DTSTART:20250131T150000
+DTEND:20250131T160000
+SUMMARY:End of Month Event
+END:VEVENT''');
+
+          final startDate = CalDateTime.date(2025, 1, 1);
+          final endDate = CalDateTime.date(2025, 1, 31);
+
+          final results = [event].inRange(startDate, endDate).toList();
+
+          // CalDateTime.date(2025, 1, 31) is treated as the entire day (00:00:00 to 23:59:59)
+          // so the event at 15:00:00 on Jan 31 should be included
+          expect(results.length, equals(1));
+          expect(
+            results[0].occurrence,
+            equals(CalDateTime.local(2025, 1, 31, 15, 0, 0)),
+          );
+          expect(results[0].event.summary, equals('End of Month Event'));
+        },
+      );
+    });
   });
 }
