@@ -2046,7 +2046,7 @@ END:VEVENT''',
               .length;
 
           expect(dailyCount, 27);
-          expect(hourlyCount, 520); // 22 days * 24 hours - 2 (starts at 8am)
+          expect(hourlyCount, 520); // Jan 10: 8am-11pm = 16 hours; Jan 11-30: 20 days × 24 hours = 480; Jan 31: 12am-11pm = 24; Total = 16 + 480 + 24 = 520
         },
       );
 
