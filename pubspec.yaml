@@ -1,6 +1,6 @@
 name: firstfloor_calendar
 description: iCalendar parsing that just works. RFC 5545 compliant with full recurrence support.
-version: 1.0.2
+version: 1.0.3
 repository: https://github.com/firstfloorsoftware/firstfloor_calendar
 
 environment:

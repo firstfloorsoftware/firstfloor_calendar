@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2025-11-06
+
+### Added
+- `addDuration` extension method on CalDateTime
+- `isAllDay` extension property on EventComponent
+- `effectiveEnd` extension property on EventComponent
+- `effectiveDuration` extension property on Event and Todo components
+- `inRange()` extension method on Iterable<EventComponent>, Iterable<TodoComponent>, Iterable<JournalComponent>, and Iterable<TimeZoneSubComponent>
+
+### Fixed
+- Ordering of occurrences when combining RRULE and RDATE values
+- TodoComponent.dtstart is now nullable (was incorrectly required)
+- JournalComponent.dtstart is now nullable (was incorrectly required)
+- Documentation comments for several component properties
+
+### Improved
+- Refactored RecurrenceIterator for better separation of concerns
+- Reorganized extensions into dedicated directory structure
+- Major test coverage increase
+
 ## [1.0.2] - 2025-11-05
 
 ### Fixed
@@ -30,6 +50,7 @@ All notable changes to this project will be documented in this file.
 - Timezone-aware date/time handling
 - Two-layer architecture (document + semantic)
 
+[1.0.3]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.3
 [1.0.2]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.2
 [1.0.1]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.1
 [1.0.0]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.0
