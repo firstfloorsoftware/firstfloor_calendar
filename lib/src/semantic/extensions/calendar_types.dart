@@ -40,6 +40,45 @@ extension CalDateTimeExtensions on CalDateTime {
   Weekday get weekday {
     return Weekday.values[native.weekday % 7];
   }
+
+  /// Checks if this date (with optional duration) falls within or overlaps a date range.
+  ///
+  /// When [duration] is null, checks if this date is between [start] and [end] (inclusive).
+  ///
+  /// When [duration] is provided, checks for overlap: the date range defined by
+  /// this date to this date + [duration] overlaps with the range [start] to [end].
+  /// This means the date is included if:
+  /// - The date starts at or before [end], AND
+  /// - The date + duration ends at or after [start]
+  ///
+  /// Examples:
+  /// ```dart
+  /// // Point-in-time check
+  /// final date = CalDateTime.local(2025, 1, 15, 10, 0, 0);
+  /// date.isInRange(
+  ///   CalDateTime.local(2025, 1, 1, 0, 0, 0),
+  ///   CalDateTime.local(2025, 1, 31, 23, 59, 59),
+  /// ); // true
+  ///
+  /// // Multi-day event overlap check
+  /// final eventStart = CalDateTime.local(2025, 1, 30, 10, 0, 0);
+  /// eventStart.isInRange(
+  ///   CalDateTime.local(2025, 2, 1, 0, 0, 0),   // Range starts Feb 1
+  ///   CalDateTime.local(2025, 2, 28, 23, 59, 59),
+  ///   duration: CalDuration(days: 3),  // Event ends Feb 2
+  /// ); // true - event overlaps range
+  /// ```
+  bool isInRange(CalDateTime start, CalDateTime end, {CalDuration? duration}) {
+    if (duration != null) {
+      // Overlap logic: check if date range overlaps with query range
+      final dateEnd = addDuration(duration);
+      // Include if date ends at or after range start AND date starts at or before range end
+      return !dateEnd.isBefore(start) && !isAfter(end);
+    } else {
+      // Point-in-time logic: check if date is within range
+      return !isBefore(start) && !isAfter(end);
+    }
+  }
 }
 
 /// Extensions for [RecurrenceRule] to enhance functionality.
