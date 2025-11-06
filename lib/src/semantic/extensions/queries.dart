@@ -314,6 +314,13 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
       throw ArgumentError('start must be before or equal to end');
     }
 
+    // If end is a date-only value, treat it as end of that day.
+    // DATE values are timezone-agnostic, so we create a local date-time
+    // without timezone to represent 23:59:59 on that date.
+    final effectiveEnd = end.isDate
+        ? CalDateTime.local(end.year, end.month, end.day, 23, 59, 59)
+        : end;
+
     for (final o in occurrences()) {
       if (duration != null) {
         // With duration: check for overlap
@@ -322,7 +329,7 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
         if (occurrenceEnd.isBefore(start)) continue;
 
         // Stop when occurrence starts after range ends (crucial for infinite recurrences)
-        if (o.isAfter(end)) break;
+        if (o.isAfter(effectiveEnd)) break;
 
         yield o;
       } else {
@@ -331,7 +338,7 @@ extension RecurrenceIteratorQuery on RecurrenceIterator {
         if (o.isBefore(start)) continue;
 
         // Stop when past the range (crucial for infinite recurrences)
-        if (o.isAfter(end)) break;
+        if (o.isAfter(effectiveEnd)) break;
 
         yield o;
       }

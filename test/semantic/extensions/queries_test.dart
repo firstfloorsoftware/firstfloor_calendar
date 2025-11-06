@@ -2446,6 +2446,35 @@ END:VEVENT''');
           );
         }
       });
+
+      test(
+        'Single event with time component on boundary date is included when using date-only boundary',
+        () {
+          final parser = CalendarParser();
+          final event = parser.parseComponentFromString<EventComponent>('''
+BEGIN:VEVENT
+UID:event1@example.com
+DTSTAMP:20250101T000000Z
+DTSTART:20250131T150000
+DTEND:20250131T160000
+SUMMARY:End of Month Event
+END:VEVENT''');
+
+          final startDate = CalDateTime.date(2025, 1, 1);
+          final endDate = CalDateTime.date(2025, 1, 31);
+
+          final results = [event].inRange(startDate, endDate).toList();
+
+          // CalDateTime.date(2025, 1, 31) is treated as the entire day (00:00:00 to 23:59:59)
+          // so the event at 15:00:00 on Jan 31 should be included
+          expect(results.length, equals(1));
+          expect(
+            results[0].occurrence,
+            equals(CalDateTime.local(2025, 1, 31, 15, 0, 0)),
+          );
+          expect(results[0].event.summary, equals('End of Month Event'));
+        },
+      );
     });
   });
 }
