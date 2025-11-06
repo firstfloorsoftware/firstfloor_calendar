@@ -34,12 +34,10 @@ class RecurrenceIterator {
          absoluteMaxIterations,
        );
 
-  /// Generates all occurrences of the event, applying exclusions and
-  /// ensuring no duplicates.
+  /// Generates all date time occurrences, applying exclusions and ensuring no duplicates.
   ///
-  /// Occurrences are generated in chronological order by merging RRULE-based
-  /// occurrences with RDATE values. This maintains lazy evaluation for
-  /// potentially infinite recurrence rules while ensuring proper ordering.
+  /// This method applies EXDATE exclusions and deduplicates occurrences
+  /// from the merged RRULE and RDATE stream.
   Iterable<CalDateTime> occurrences() sync* {
     // Only store EXDATEs (finite set) for exclusion checking
     final exdateSet = <CalDateTime>{};
@@ -47,12 +45,28 @@ class RecurrenceIterator {
 
     // Track last yielded occurrence for duplicate detection (O(1) memory).
     // This sliding window approach works because:
-    // 1. Both RRULE and RDATE streams are sorted chronologically
+    // 1. The merged stream from _occurrences() is sorted chronologically
     // 2. Duplicates can only occur consecutively (same timestamp from both sources)
     // 3. We only need to compare with the immediately previous occurrence
     // This prevents memory leaks from storing all occurrences for infinite RRULEs.
     CalDateTime? lastYielded;
 
+    for (var o in _occurrences()) {
+      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
+      if (exdateSet.contains(o)) continue;
+      if (lastYielded == o) continue;
+
+      lastYielded = o;
+      yield o;
+    }
+  }
+
+  /// Generates occurrences by merging RRULE-based occurrences with RDATEs
+  /// in chronological order.
+  ///
+  /// This maintains lazy evaluation for potentially infinite recurrence rules
+  /// while ensuring proper ordering.
+  Iterable<CalDateTime> _occurrences() sync* {
     // Pre-sort RDATEs (finite list) for chronological merging
     final sortedRDates = <CalDateTime>[];
     if (rdates != null) {
@@ -71,53 +85,35 @@ class RecurrenceIterator {
     var rdateIndex = 0;
 
     // Merge RRULE occurrences and RDATEs in chronological order
-    for (var o in _occurrences()) {
+    for (var o in _generate()) {
       // Yield all RDATEs that come before this RRULE occurrence
       while (rdateIndex < sortedRDates.length &&
           sortedRDates[rdateIndex].isBefore(o)) {
-        final rdate = sortedRDates[rdateIndex++];
-
-        // Skip if excluded (EXDATE) or duplicate (same as last yielded)
-        if (exdateSet.contains(rdate)) continue;
-        if (lastYielded == rdate) continue;
-
-        lastYielded = rdate;
-        yield rdate;
+        yield sortedRDates[rdateIndex++];
       }
 
       // Now yield the RRULE occurrence
-      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
-      if (exdateSet.contains(o)) continue;
-      if (lastYielded == o) continue;
-
-      lastYielded = o;
       yield o;
     }
 
     // Yield any remaining RDATEs after all RRULE occurrences
     while (rdateIndex < sortedRDates.length) {
-      final rdate = sortedRDates[rdateIndex++];
-
-      // Skip if excluded (EXDATE) or duplicate (same as last yielded)
-      if (exdateSet.contains(rdate)) continue;
-      if (lastYielded == rdate) continue;
-
-      lastYielded = rdate;
-      yield rdate;
+      yield sortedRDates[rdateIndex++];
     }
   }
 
-  Iterable<CalDateTime> _occurrences() sync* {
+  /// Generates RRULE-based occurrences or DTSTART if no RRULE.
+  Iterable<CalDateTime> _generate() sync* {
     // Generate RRULE-based occurrences
     if (rrule != null) {
-      yield* _generate(rrule!);
+      yield* _generateFromRule(rrule!);
     } else {
       // if no RRULE, just yield DTSTART once
       yield dtstart;
     }
   }
 
-  Iterable<CalDateTime> _generate(RecurrenceRule rrule) sync* {
+  Iterable<CalDateTime> _generateFromRule(RecurrenceRule rrule) sync* {
     final count = rrule.count ?? -1;
     final until = rrule.until != null ? _normalizeUntil(rrule.until!) : null;
     final filters = _getFilters(dtstart, rrule);
