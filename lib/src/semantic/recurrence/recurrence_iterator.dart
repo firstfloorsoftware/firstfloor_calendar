@@ -36,8 +36,7 @@ class RecurrenceIterator {
 
   /// Generates all date time occurrences, applying exclusions and ensuring no duplicates.
   ///
-  /// This method applies EXDATE exclusions and deduplicates occurrences
-  /// from the merged RRULE and RDATE stream.
+  /// Occurrences are yielded in chronological order.
   Iterable<CalDateTime> occurrences() sync* {
     // Only store EXDATEs (finite set) for exclusion checking
     final exdateSet = <CalDateTime>{};
