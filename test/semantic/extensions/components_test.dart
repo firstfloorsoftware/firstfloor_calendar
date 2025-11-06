@@ -93,6 +93,107 @@ void main() {
       expect(event.isAllDay, isFalse);
     });
 
+    test('isMultiDay returns true for event with duration >= 1 day', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2D\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns true for event crossing midnight', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T230000\r\n'
+        'DTEND:20250116T010000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single-day event', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DTEND:20250115T110000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false when no duration or end time', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VEVENT',
+      );
+
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test(
+      'isMultiDay returns true for all-day event spanning multiple days',
+      () {
+        final parser = CalendarParser();
+        final event = parser.parseComponentFromString<EventComponent>(
+          'BEGIN:VEVENT\r\n'
+          'UID:test-multiday-5\r\n'
+          'DTSTAMP:20250101T000000Z\r\n'
+          'DTSTART;VALUE=DATE:20250115\r\n'
+          'DTEND;VALUE=DATE:20250117\r\n'
+          'END:VEVENT',
+        );
+
+        expect(event.isMultiDay, isTrue);
+      },
+    );
+
+    test('isMultiDay returns false for single all-day event', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DTEND;VALUE=DATE:20250116\r\n'
+        'END:VEVENT',
+      );
+
+      // All-day event from Jan 15 to Jan 16 (exclusive) is a single day
+      expect(event.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false for single all-day event without end', () {
+      final parser = CalendarParser();
+      final event = parser.parseComponentFromString<EventComponent>(
+        'BEGIN:VEVENT\r\n'
+        'UID:test-multiday-7\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'END:VEVENT',
+      );
+
+      // Single all-day event with no end date is not multi-day
+      expect(event.isMultiDay, isFalse);
+    });
+
     test('effectiveEnd returns dtend when present', () {
       final parser = CalendarParser();
       final event = parser.parseComponentFromString<EventComponent>(
@@ -510,6 +611,90 @@ void main() {
       expect(todo.effectiveDuration, isNotNull);
       expect(todo.effectiveDuration!.sign, Sign.negative);
       expect(todo.effectiveDuration!.hours, 1);
+    });
+
+    test('isMultiDay returns true for todo with duration >= 1 day', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-1\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DURATION:P2D\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns true for todo crossing midnight', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-2\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T230000\r\n'
+        'DUE:20250116T010000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single-day todo', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-3\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'DUE:20250115T140000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns false when no duration or due date', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-4\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART:20250115T100000\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isFalse);
+    });
+
+    test('isMultiDay returns true for all-day todo spanning multiple days', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-5\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DUE;VALUE=DATE:20250118\r\n'
+        'END:VTODO',
+      );
+
+      expect(todo.isMultiDay, isTrue);
+    });
+
+    test('isMultiDay returns false for single all-day todo', () {
+      final parser = CalendarParser();
+      final todo = parser.parseComponentFromString<TodoComponent>(
+        'BEGIN:VTODO\r\n'
+        'UID:test-multiday-todo-6\r\n'
+        'DTSTAMP:20250101T000000Z\r\n'
+        'DTSTART;VALUE=DATE:20250115\r\n'
+        'DUE;VALUE=DATE:20250116\r\n'
+        'END:VTODO',
+      );
+
+      // All-day todo from Jan 15 to Jan 16 (exclusive) is a single day
+      expect(todo.isMultiDay, isFalse);
     });
   });
 
