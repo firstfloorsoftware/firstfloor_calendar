@@ -24,10 +24,10 @@ class Calendar extends CalendarComponent {
   Calendar({required super.properties, required super.components})
     : super(name: 'VCALENDAR');
 
-  /// The version of the iCalendar specification used.
+  /// The version of the iCalendar specification used. This is a required property.
   String get version => value('VERSION');
 
-  /// The product identifier for the calendar.
+  /// The product identifier for the calendar. This is a required property.
   String get prodid => value('PRODID');
 
   /// The calendar scale, defaults to 'GREGORIAN' if not specified.
@@ -78,10 +78,10 @@ class EventComponent extends CalendarComponent {
   /// The list of alarm components associated with the event.
   List<AlarmComponent> get alarms => _cachedAlarms;
 
-  /// The timestamp of when the event was created.
+  /// The timestamp of when the event was created. This is a required property.
   CalDateTime get dtstamp => value('DTSTAMP');
 
-  /// The unique identifier for the event.
+  /// The unique identifier for the event. This is a required property.
   String get uid => value('UID');
 
   /// The start date and time of the event.
@@ -111,7 +111,7 @@ class EventComponent extends CalendarComponent {
   /// The organizer of the event, if any.
   CalendarUserAddress? get organizer => valueOrNull('ORGANIZER');
 
-  /// The percentage of completion of the event, if any.
+  /// The priority of the event, if any.
   int? get priority => valueOrNull('PRIORITY');
 
   /// The sequence number of the event, if any.
@@ -200,10 +200,10 @@ class TodoComponent extends CalendarComponent {
   /// The list of alarm components associated with the todo.
   List<AlarmComponent> get alarms => _cachedAlarms;
 
-  /// The timestamp of when the todo was created.
+  /// The timestamp of when the todo was created. This is a required property.
   CalDateTime get dtstamp => value('DTSTAMP');
 
-  /// The unique identifier for the todo.
+  /// The unique identifier for the todo. This is a required property.
   String get uid => value('UID');
 
   /// The classification of the todo, if any.
@@ -315,10 +315,10 @@ class JournalComponent extends CalendarComponent {
   JournalComponent({required super.properties, required super.components})
     : super(name: 'VJOURNAL');
 
-  /// The timestamp of when the journal was created.
+  /// The timestamp of when the journal was created. This is a required property.
   CalDateTime get dtstamp => value('DTSTAMP');
 
-  /// The unique identifier for the journal.
+  /// The unique identifier for the journal. This is a required property.
   String get uid => value('UID');
 
   /// The classification of the journal, if any.
@@ -333,13 +333,13 @@ class JournalComponent extends CalendarComponent {
   /// The start date and time of the journal, if any.
   CalDateTime? get dtstart => valueOrNull('DTSTART');
 
-  /// The geographical location of the journal, if any.
+  /// The last modified date and time of the journal, if any.
   CalDateTime? get lastModified => valueOrNull('LAST-MODIFIED');
 
-  /// The location of the journal, if any.
+  /// The organizer of the journal, if any.
   CalendarUserAddress? get organizer => valueOrNull('ORGANIZER');
 
-  /// The priority of the journal, if any.
+  /// The recurrence identifier of the journal, if any.
   String? get recurrenceId => valueOrNull('RECURRENCE-ID');
 
   /// The sequence number of the journal, if any.
@@ -400,14 +400,14 @@ class FreeBusyComponent extends CalendarComponent {
     required super.components,
   }) : super(name: 'VFREEBUSY');
 
-  /// The timestamp of when the free/busy component was created.
+  /// The timestamp of when the free/busy component was created. This is a required property.
   CalDateTime get dtstamp => value('DTSTAMP');
 
-  /// The unique identifier for the free/busy component.
+  /// The unique identifier for the free/busy component. This is a required property.
   String get uid => value('UID');
 
   /// The contact associated with the free/busy component, if any.
-  CalendarUserAddress? get contact => value('CONTACT');
+  CalendarUserAddress? get contact => valueOrNull('CONTACT');
 
   /// The start date and time of the free/busy component, if any.
   CalDateTime? get dtstart => valueOrNull('DTSTART');
@@ -458,7 +458,7 @@ class TimeZoneComponent extends CalendarComponent {
   /// The list of daylight time subcomponents in the timezone.
   List<TimeZoneSubComponent> get daylight => _cachedDaylight;
 
-  /// The unique identifier for the timezone.
+  /// The unique identifier for the timezone. This is a required property.
   String get tzid => value('TZID');
 
   /// The last modified date and time of the timezone, if any.
@@ -476,13 +476,13 @@ class TimeZoneSubComponent extends CalendarComponent {
     required super.components,
   });
 
-  /// The date and time when the time zone rule starts.
+  /// The date and time when the time zone rule starts. This is a required property.
   CalDateTime get dtstart => value('DTSTART');
 
-  /// The time zone offset from which the rule applies.
+  /// The time zone offset from which the rule applies. This is a required property.
   UtcOffset get tzoffsetFrom => value('TZOFFSETFROM');
 
-  /// The time zone offset to which the rule applies.
+  /// The time zone offset to which the rule applies. This is a required property.
   UtcOffset get tzoffsetTo => value('TZOFFSETTO');
 
   /// The recurrence rule for the time zone rule, if any.
@@ -500,9 +500,7 @@ class TimeZoneSubComponent extends CalendarComponent {
 
 /// Represents an alarm in the calendar.
 class AlarmComponent extends CalendarComponent {
-  late final AlarmAction? _action = actionName != null
-      ? AlarmActionNames.tryParse(actionName!)
-      : null;
+  late final AlarmAction? _action = AlarmActionNames.tryParse(actionName);
 
   /// Creates a new alarm with the given properties.
   /// Properties are expected to be immutable and contain required values.
@@ -512,10 +510,10 @@ class AlarmComponent extends CalendarComponent {
   /// The action to be taken when the alarm triggers, if any.
   AlarmAction? get action => _action;
 
-  /// The action name as a string, if any.
-  String? get actionName => value('ACTION');
+  /// The action name as a string. This is a required property.
+  String get actionName => value('ACTION');
 
-  /// The trigger for the alarm.
+  /// The trigger for the alarm. This is a required property.
   Trigger get trigger => value('TRIGGER');
 
   /// The description of the alarm, if any.
