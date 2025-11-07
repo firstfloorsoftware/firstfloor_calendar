@@ -16,6 +16,7 @@ A Dart library for parsing and working with iCalendar (.ics) files. Built with R
   - [Working with Timezones](#working-with-timezones)
   - [Recurring Events](#recurring-events)
   - [Filtering Events by Date Range](#filtering-events-by-date-range)
+  - [Chronological ordering across multiple events](#chronological-ordering-across-multiple-events)
   - [Streaming Large Files](#streaming-large-files)
   - [Conditional Parsing with Stream Parser](#conditional-parsing-with-stream-parser)
   - [Custom Property Parsers](#custom-property-parsers)
@@ -160,7 +161,9 @@ for (final result in occurrencesInMarch) {
 final todoOccurrences = calendar.todos.inRange(start, end);
 ```
 
-**Example: Chronological ordering across multiple events**
+### Chronological ordering across multiple events
+
+The `inRange` extension automatically sorts event occurrences chronologically, regardless of the order they appear in the source iCalendar file.
 
 ```dart
 final ics = '''
