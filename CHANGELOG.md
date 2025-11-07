@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-11-07
+
+### Added
+- `isMultiDay` extension property on EventComponent and TodoComponent
+
+### Fixed
+- `inRange()` extensions now guarantee chronological ordering across all components
+- Date-only end boundary handling in `inRange()`
+
 ## [1.0.3] - 2025-11-06
 
 ### Added
