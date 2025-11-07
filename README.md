@@ -88,6 +88,12 @@ print('Summary: ${event.summary ?? "Untitled"}');
 print('Location: ${event.location ?? "No location"}');
 print('Description: ${event.description ?? ""}');
 
+// Extension properties
+print('Is recurring: ${event.isRecurring}');
+print('Is all-day: ${event.isAllDay}');
+print('Is multi-day: ${event.isMultiDay}');
+print('Duration: ${event.effectiveDuration}');
+
 // Attendees
 for (final attendee in event.attendees) {
   print('Attendee: ${attendee.address}');
