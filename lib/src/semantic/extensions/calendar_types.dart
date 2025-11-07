@@ -26,13 +26,7 @@ extension CalDateTimeExtensions on CalDateTime {
 
   /// The day of the year (1-365 or 1-366 in leap years).
   int get dayOfYear {
-    final startOfYear = copyWith(
-      month: 1,
-      day: 1,
-      hour: 0,
-      minute: 0,
-      second: 0,
-    );
+    final startOfYear = CalDateTime.date(year, 1, 1);
     return native.difference(startOfYear.native).inDays + 1;
   }
 

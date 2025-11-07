@@ -538,7 +538,7 @@ void main() {
         byHour: {0, 12, 23},
       );
       final filter = ByHourFilter(rrule);
-      final source = [CalDateTime.local(2025, 1, 1, 0, 0, 0)];
+      final source = [CalDateTime.local(2025, 1, 1)];
       final result = filter.transform(source).toList();
 
       expect(result.length, 3);
@@ -554,7 +554,7 @@ void main() {
       );
       final filter = ByHourFilter(rrule);
       final source = [
-        CalDateTime.local(2025, 1, 1, 0, 0, 0),
+        CalDateTime.local(2025, 1, 1),
         CalDateTime.local(2025, 1, 1, 1, 0, 0),
         CalDateTime.local(2025, 1, 1, 12, 0, 0),
       ];

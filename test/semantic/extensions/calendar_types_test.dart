@@ -27,24 +27,24 @@ void main() {
     });
 
     test('dayOfYear returns correct day number in regular year', () {
-      expect(CalDateTime.local(2025, 1, 1, 0, 0, 0).dayOfYear, 1);
-      expect(CalDateTime.local(2025, 1, 31, 0, 0, 0).dayOfYear, 31);
-      expect(CalDateTime.local(2025, 2, 1, 0, 0, 0).dayOfYear, 32);
-      expect(CalDateTime.local(2025, 3, 1, 0, 0, 0).dayOfYear, 60);
-      expect(CalDateTime.local(2025, 12, 31, 0, 0, 0).dayOfYear, 365);
+      expect(CalDateTime.date(2025, 1, 1).dayOfYear, 1);
+      expect(CalDateTime.local(2025, 1, 31).dayOfYear, 31);
+      expect(CalDateTime.local(2025, 2, 1).dayOfYear, 32);
+      expect(CalDateTime.local(2025, 3, 1).dayOfYear, 60);
+      expect(CalDateTime.local(2025, 12, 31).dayOfYear, 365);
     });
 
     test('dayOfYear returns correct day number in leap year', () {
-      expect(CalDateTime.local(2024, 1, 1, 0, 0, 0).dayOfYear, 1);
-      expect(CalDateTime.local(2024, 2, 29, 0, 0, 0).dayOfYear, 60);
-      expect(CalDateTime.local(2024, 3, 1, 0, 0, 0).dayOfYear, 61);
-      expect(CalDateTime.local(2024, 12, 31, 0, 0, 0).dayOfYear, 366);
+      expect(CalDateTime.local(2024, 1, 1).dayOfYear, 1);
+      expect(CalDateTime.local(2024, 2, 29).dayOfYear, 60);
+      expect(CalDateTime.local(2024, 3, 1).dayOfYear, 61);
+      expect(CalDateTime.local(2024, 12, 31).dayOfYear, 366);
     });
 
     test('weekday returns correct weekday', () {
-      expect(CalDateTime.local(2025, 1, 1, 0, 0, 0).weekday, Weekday.we);
-      expect(CalDateTime.local(2025, 1, 6, 0, 0, 0).weekday, Weekday.mo);
-      expect(CalDateTime.local(2025, 1, 5, 0, 0, 0).weekday, Weekday.su);
+      expect(CalDateTime.date(2025, 1, 1).weekday, Weekday.we);
+      expect(CalDateTime.local(2025, 1, 6).weekday, Weekday.mo);
+      expect(CalDateTime.local(2025, 1, 5).weekday, Weekday.su);
     });
 
     group('addDuration', () {
@@ -257,7 +257,7 @@ void main() {
     test('isFinite returns true when until is set', () {
       final rrule = RecurrenceRule(
         freq: RecurrenceFrequency.daily,
-        until: CalDateTime.local(2025, 12, 31, 0, 0, 0),
+        until: CalDateTime.local(2025, 12, 31),
       );
       expect(rrule.isFinite, isTrue);
       expect(rrule.isInfinite, isFalse);

@@ -16,7 +16,8 @@ A Dart library for parsing and working with iCalendar (.ics) files. Built with R
   - [Working with Timezones](#working-with-timezones)
   - [Recurring Events](#recurring-events)
   - [Filtering Events by Date Range](#filtering-events-by-date-range)
-  - [Chronological ordering across multiple events](#chronological-ordering-across-multiple-events)
+  - [Getting All Occurrences](#getting-all-occurrences)
+  - [Chronological Ordering Across Multiple Events](#chronological-ordering-across-multiple-events)
   - [Streaming Large Files](#streaming-large-files)
   - [Conditional Parsing with Stream Parser](#conditional-parsing-with-stream-parser)
   - [Custom Property Parsers](#custom-property-parsers)
@@ -87,6 +88,12 @@ print('Summary: ${event.summary ?? "Untitled"}');
 print('Location: ${event.location ?? "No location"}');
 print('Description: ${event.description ?? ""}');
 
+// Extension properties
+print('Is recurring: ${event.isRecurring}');
+print('Is all-day: ${event.isAllDay}');
+print('Is multi-day: ${event.isMultiDay}');
+print('Duration: ${event.effectiveDuration}');
+
 // Attendees
 for (final attendee in event.attendees) {
   print('Attendee: ${attendee.address}');
@@ -144,26 +151,45 @@ for (final occurrence in event.occurrences().take(10)) {
 
 ### Filtering Events by Date Range
 
-Use the `inRange` extension to filter events that occur within a specific date range. This works correctly with multi-day events, all-day events, and recurring events. Results are always returned in chronological order, regardless of the order in the source file.
+Use the `occurrences` extension to filter events that occur within a specific date range. This works correctly with multi-day events, all-day events, and recurring events. Results are always returned in chronological order, regardless of the order in the source file.
 
 ```dart
 final start = CalDateTime.date(2024, 3, 1);
 final end = CalDateTime.date(2024, 3, 31);
 
 // Get all event occurrences in March 2024
-final occurrencesInMarch = calendar.events.inRange(start, end);
+final occurrencesInMarch = calendar.events.occurrences(
+  start: start,
+  end: end,
+);
 
 for (final result in occurrencesInMarch) {
   print('${result.event.summary}: ${result.occurrence}');
 }
 
 // Works with todos and journals too
-final todoOccurrences = calendar.todos.inRange(start, end);
+final todoOccurrences = calendar.todos.occurrences(
+  start: start,
+  end: end,
+);
 ```
 
-### Chronological ordering across multiple events
+### Getting All Occurrences
 
-The `inRange` extension automatically sorts event occurrences chronologically, regardless of the order they appear in the source iCalendar file.
+When you need all occurrences across multiple components without filtering by date range, simply call `occurrences()` without parameters. Use `.take()` to limit results when working with recurring events that could generate infinite occurrences.
+
+```dart
+// Get all occurrences without date filtering
+final allOccurrences = calendar.events.occurrences();
+
+for (final result in allOccurrences.take(20)) {
+  print('${result.event.summary}: ${result.occurrence}');
+}
+```
+
+### Chronological Ordering Across Multiple Events
+
+The `occurrences` extension automatically sorts event occurrences chronologically, regardless of the order they appear in the source iCalendar file.
 
 ```dart
 final ics = '''
@@ -197,7 +223,10 @@ final calendar = parser.parseFromString(ics);
 final start = CalDateTime.date(2024, 3, 1);
 final end = CalDateTime.date(2024, 3, 31);
 
-for (final result in calendar.events.inRange(start, end)) {
+for (final result in calendar.events.occurrences(
+  start: start,
+  end: end,
+)) {
   print('${result.occurrence}: ${result.event.summary}');
 }
 

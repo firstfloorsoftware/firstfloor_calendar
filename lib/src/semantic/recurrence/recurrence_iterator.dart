@@ -36,8 +36,29 @@ class RecurrenceIterator {
 
   /// Generates all date time occurrences, applying exclusions and ensuring no duplicates.
   ///
+  /// If [start] and/or [end] are provided, only occurrences within that
+  /// range are yielded. If neither is provided, all occurrences are yielded.
+  ///
+  /// If [duration] is provided, occurrences are treated as time ranges
+  /// from occurrence start to occurrence start + duration for overlap checks.
+  ///
   /// Occurrences are yielded in chronological order.
-  Iterable<CalDateTime> occurrences() sync* {
+  Iterable<CalDateTime> occurrences({
+    CalDateTime? start,
+    CalDateTime? end,
+    CalDuration? duration,
+  }) sync* {
+    if (start != null && end != null && start.isAfter(end)) {
+      throw ArgumentError('start must be before or equal to end');
+    }
+
+    // If end is a date-only value, treat it as end of that day.
+    // DATE values are timezone-agnostic, so we create a local date-time
+    // without timezone to represent 23:59:59 on that date.
+    final effectiveEnd = end != null && end.isDate
+        ? CalDateTime.local(end.year, end.month, end.day, 23, 59, 59)
+        : end;
+
     // Only store EXDATEs (finite set) for exclusion checking
     final exdateSet = <CalDateTime>{};
     exdateSet.addAll(exdates ?? []);
@@ -51,9 +72,19 @@ class RecurrenceIterator {
     CalDateTime? lastYielded;
 
     for (var o in _occurrences()) {
+      // Stop when past the range (crucial for infinite recurrences)
+      if (effectiveEnd != null && o.isAfter(effectiveEnd)) break;
+
       // Skip if excluded (EXDATE) or duplicate (same as last yielded)
       if (exdateSet.contains(o)) continue;
       if (lastYielded == o) continue;
+
+      if (start != null) {
+        // Skip occurrences before the range
+        // With duration: check for overlap
+        final occurrenceEnd = duration != null ? o.addDuration(duration) : o;
+        if (occurrenceEnd.isBefore(start)) continue;
+      }
 
       lastYielded = o;
       yield o;

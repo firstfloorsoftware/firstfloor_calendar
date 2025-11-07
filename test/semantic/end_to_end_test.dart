@@ -578,7 +578,7 @@ void main() {
       );
 
       expect(timezone.tzid, 'Fictitious');
-      expect(timezone.lastModified, CalDateTime.utc(1987, 1, 1, 0, 0, 0));
+      expect(timezone.lastModified, CalDateTime.utc(1987, 1, 1));
       expect(timezone.daylight.length, 1);
       expect(timezone.standard.length, 1);
       expect(timezone.daylight[0].dtstart, CalDateTime.local(1987, 4, 5, 2));
@@ -653,7 +653,7 @@ void main() {
       );
 
       expect(timezone.tzid, 'Fictitious');
-      expect(timezone.lastModified, CalDateTime.utc(1987, 1, 1, 0, 0, 0));
+      expect(timezone.lastModified, CalDateTime.utc(1987, 1, 1));
       expect(timezone.daylight.length, 2);
       expect(timezone.standard.length, 1);
       expect(timezone.daylight[0].dtstart, CalDateTime.local(1987, 4, 5, 2));
