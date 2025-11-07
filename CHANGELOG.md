@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2025-11-07
+
+### Changed
+- **BREAKING**: Renamed `inRange()` extension methods to `occurrences()` for consistency
+  - All component iterable extensions (EventIterableQuery, TodoIterableQuery, JournalIterableQuery, TimeZoneIterableQuery) now use `occurrences()`
+  - Parameters are now optional: `occurrences({CalDateTime? start, CalDateTime? end})`
+  - Call without parameters to get all occurrences, or provide `start`/`end` to filter
+- Updated `RecurrenceIterator.occurrences()` to accept optional `start`, `end`, and `duration` parameters
+- Removed `RecurrenceIteratorQuery` extension - logic consolidated into `RecurrenceIterator` class
+
 ## [1.0.4] - 2025-11-07
 
 ### Added
@@ -59,6 +69,8 @@ All notable changes to this project will be documented in this file.
 - Timezone-aware date/time handling
 - Two-layer architecture (document + semantic)
 
+[1.0.5]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.5
+[1.0.4]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.4
 [1.0.3]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.3
 [1.0.2]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.2
 [1.0.1]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.1
