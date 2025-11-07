@@ -622,7 +622,7 @@ END:VTIMEZONE
 ''');
 
       expect(tz.tzid, 'America/New_York');
-      expect(tz.lastModified, CalDateTime.utc(2025, 1, 1, 0, 0, 0));
+      expect(tz.lastModified, CalDateTime.utc(2025, 1, 1));
       expect(tz.tzurl, Uri.parse('https://example.com/tz/newyork'));
       expect(tz.standard.length, 1);
       expect(tz.daylight.length, 1);
