@@ -1,7 +1,16 @@
 name: firstfloor_calendar
-description: iCalendar parsing that just works. RFC 5545 compliant with full recurrence support.
-version: 1.0.5
+description: >-
+  RFC 5545 compliant iCalendar (.ics) parser for Dart and Flutter.
+  Parse calendar events, todos, journals with full RRULE recurrence support.
+  Memory-efficient streaming for large files. Type-safe API with timezone handling.
+version: 1.0.6
 repository: https://github.com/firstfloorsoftware/firstfloor_calendar
+topics:
+  - icalendar
+  - calendar
+  - ics
+  - rfc5545
+  - recurrence
 
 environment:
   sdk: ^3.8.1
