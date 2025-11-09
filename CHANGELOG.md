@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2025-11-10
+
+### Fixes
+- Invalid pubspec.yaml package description
+
 ## [1.0.6] - 2025-11-10
 
 ### Fixed
@@ -77,6 +82,7 @@ All notable changes to this project will be documented in this file.
 - Timezone-aware date/time handling
 - Two-layer architecture (document + semantic)
 
+[1.0.7]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.7
 [1.0.6]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.6
 [1.0.5]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.5
 [1.0.4]: https://github.com/firstfloorsoftware/firstfloor_calendar/releases/tag/v1.0.4
