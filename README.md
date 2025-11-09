@@ -129,11 +129,14 @@ final event = calendar.events.first;
 
 // Access timezone-aware datetime
 print('Start: ${event.dtstart}');
-print('Timezone: ${event.dtstart?.dateTime?.timeZone.name}');
+print('Timezone: ${event.dtstart?.time?.tzid}');
 
-// Convert to different timezone
-final berlinTime = event.dtstart?.dateTime?.toTimeZone(tz.getLocation('Europe/Berlin'));
-print('Berlin time: $berlinTime');
+// Convert to different timezone (if native is TZDateTime)
+if (event.dtstart?.native is tz.TZDateTime) {
+  final tzDateTime = event.dtstart!.native as tz.TZDateTime;
+  final berlinTime = tz.TZDateTime.from(tzDateTime, tz.getLocation('Europe/Berlin'));
+  print('Berlin time: $berlinTime');
+}
 ```
 
 ### Recurring Events
@@ -366,7 +369,7 @@ final document = DocumentParser().parse(ics);
 // ... custom logic ...
 
 // Convert to semantic models
-final calendar = CalendarParser().parseDocument(document);
+final calendar = CalendarParser().parse(document);
 
 // Or go directly to semantic layer
 final calendar = CalendarParser().parseFromString(ics);
