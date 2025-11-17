@@ -30,7 +30,7 @@ bool parseBoolean(CalendarProperty property) {
   if (value == 'TRUE') return true;
   if (value == 'FALSE') return false;
   throw ParseException(
-    'Invalid boolean value "$value" for property "${property.name}"',
+    'Invalid boolean value "${property.value}" for property "${property.name}"',
     lineNumber: property.lineNumber,
   );
 }
