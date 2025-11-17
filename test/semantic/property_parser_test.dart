@@ -872,4 +872,98 @@ void main() {
       expect(time.tzid, 'America/New_York');
     });
   });
+
+  group('Parse BOOLEAN', () {
+    test('Parse TRUE (uppercase)', () {
+      final property = DocumentParser.parseProperty('X-TEST:TRUE');
+      final value = parseBoolean(property);
+      expect(value, isTrue);
+    });
+
+    test('Parse FALSE (uppercase)', () {
+      final property = DocumentParser.parseProperty('X-TEST:FALSE');
+      final value = parseBoolean(property);
+      expect(value, isFalse);
+    });
+
+    test('Parse true (lowercase)', () {
+      final property = DocumentParser.parseProperty('X-TEST:true');
+      final value = parseBoolean(property);
+      expect(value, isTrue);
+    });
+
+    test('Parse false (lowercase)', () {
+      final property = DocumentParser.parseProperty('X-TEST:false');
+      final value = parseBoolean(property);
+      expect(value, isFalse);
+    });
+
+    test('Parse True (mixed case)', () {
+      final property = DocumentParser.parseProperty('X-TEST:True');
+      final value = parseBoolean(property);
+      expect(value, isTrue);
+    });
+
+    test('Parse False (mixed case)', () {
+      final property = DocumentParser.parseProperty('X-TEST:False');
+      final value = parseBoolean(property);
+      expect(value, isFalse);
+    });
+
+    test('Parse invalid boolean value throws ParseException', () {
+      final property = DocumentParser.parseProperty('X-TEST:INVALID');
+      expect(
+        () => parseBoolean(property),
+        throwsA(
+          predicate(
+            (e) =>
+                e.toString() ==
+                'ParseException: Invalid boolean value "INVALID" for property "X-TEST" [Ln 0]',
+          ),
+        ),
+      );
+    });
+
+    test('Parse empty boolean value throws ParseException', () {
+      final property = DocumentParser.parseProperty('X-TEST:');
+      expect(
+        () => parseBoolean(property),
+        throwsA(
+          predicate(
+            (e) =>
+                e.toString() ==
+                'ParseException: Invalid boolean value "" for property "X-TEST" [Ln 0]',
+          ),
+        ),
+      );
+    });
+
+    test('Parse numeric value throws ParseException', () {
+      final property = DocumentParser.parseProperty('X-TEST:1');
+      expect(
+        () => parseBoolean(property),
+        throwsA(
+          predicate(
+            (e) =>
+                e.toString() ==
+                'ParseException: Invalid boolean value "1" for property "X-TEST" [Ln 0]',
+          ),
+        ),
+      );
+    });
+
+    test('Parse YES value throws ParseException', () {
+      final property = DocumentParser.parseProperty('X-TEST:YES');
+      expect(
+        () => parseBoolean(property),
+        throwsA(
+          predicate(
+            (e) =>
+                e.toString() ==
+                'ParseException: Invalid boolean value "YES" for property "X-TEST" [Ln 0]',
+          ),
+        ),
+      );
+    });
+  });
 }

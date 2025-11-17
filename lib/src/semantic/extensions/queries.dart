@@ -50,12 +50,7 @@ extension EventIterableQuery on Iterable<EventComponent> {
     return _OccurrenceIterator.occurrences<EventComponent>(
       components: this,
       ignore: (event) => event.dtstart == null,
-      occurrences: (event) => RecurrenceIterator(
-        dtstart: event.dtstart!,
-        rrule: event.rrule,
-        exdates: event.exdates,
-        rdates: event.rdates,
-      ).occurrences(start: start, end: end, duration: event.effectiveDuration),
+      occurrences: (event) => event.occurrences(start: start, end: end),
     ).map((e) => (occurrence: e.occurrence, event: e.component));
   }
 }
@@ -105,12 +100,7 @@ extension TodoIterableQuery on Iterable<TodoComponent> {
     return _OccurrenceIterator.occurrences<TodoComponent>(
       components: this,
       ignore: (todo) => todo.dtstart == null,
-      occurrences: (todo) => RecurrenceIterator(
-        dtstart: todo.dtstart!,
-        rrule: todo.rrule,
-        exdates: todo.exdates,
-        rdates: todo.rdates,
-      ).occurrences(start: start, end: end, duration: todo.effectiveDuration),
+      occurrences: (todo) => todo.occurrences(start: start, end: end),
     ).map((e) => (occurrence: e.occurrence, todo: e.component));
   }
 }
@@ -166,12 +156,7 @@ extension JournalIterableQuery on Iterable<JournalComponent> {
     return _OccurrenceIterator.occurrences<JournalComponent>(
       components: this,
       ignore: (journal) => journal.dtstart == null,
-      occurrences: (journal) => RecurrenceIterator(
-        dtstart: journal.dtstart!,
-        rrule: journal.rrule,
-        exdates: journal.exdates,
-        rdates: journal.rdates,
-      ).occurrences(start: start, end: end),
+      occurrences: (journal) => journal.occurrences(start: start, end: end),
     ).map((e) => (occurrence: e.occurrence, journal: e.component));
   }
 }
@@ -227,11 +212,7 @@ extension TimeZoneIterableQuery on Iterable<TimeZoneSubComponent> {
     return _OccurrenceIterator.occurrences<TimeZoneSubComponent>(
       components: this,
       ignore: (timezone) => false, // No timezones to ignore
-      occurrences: (timezone) => RecurrenceIterator(
-        dtstart: timezone.dtstart,
-        rrule: timezone.rrule,
-        rdates: timezone.rdates,
-      ).occurrences(start: start, end: end),
+      occurrences: (timezone) => timezone.occurrences(start: start, end: end),
     ).map((e) => (occurrence: e.occurrence, timezone: e.component));
   }
 }
