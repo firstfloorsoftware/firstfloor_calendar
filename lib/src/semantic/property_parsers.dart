@@ -24,7 +24,7 @@ Attachment parseAttachment(CalendarProperty property) {
   );
 }
 
-// Parses a [CalendarProperty] into a boolean value.
+/// Parses a [CalendarProperty] into a boolean value.
 bool parseBoolean(CalendarProperty property) {
   final value = property.value.toUpperCase();
   if (value == 'TRUE') return true;
