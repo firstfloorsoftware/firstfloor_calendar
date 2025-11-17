@@ -24,6 +24,17 @@ Attachment parseAttachment(CalendarProperty property) {
   );
 }
 
+// Parses a [CalendarProperty] into a boolean value.
+bool parseBoolean(CalendarProperty property) {
+  final value = property.value.toUpperCase();
+  if (value == 'TRUE') return true;
+  if (value == 'FALSE') return false;
+  throw ParseException(
+    'Invalid boolean value "$value" for property "${property.name}"',
+    lineNumber: property.lineNumber,
+  );
+}
+
 /// Parses a [CalendarProperty] into a calendar user address value.
 CalendarUserAddress parseCalAddress(CalendarProperty property) {
   final cutypeName = property.parameters['CUTYPE']?.firstOrNull;
